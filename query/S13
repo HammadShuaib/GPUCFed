@@ -1,0 +1,13 @@
+SELECT ?drug ?title WHERE { 
+?drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/drugCategory> <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugcategory/micronutrient> .
+?drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/casRegistryNumber> ?id .
+?keggDrug <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://bio2rdf.org/ns/kegg#Drug> .
+?keggDrug <http://bio2rdf.org/ns/bio2rdf#xRef> ?id .
+?keggDrug <http://purl.org/dc/elements/1.1/title> ?title .
+
+	FILTER( ?population = "49000000"  && ?foundingDate ="1910-05-31"^^xsd:date || ?population = "43786000" && ?foundingDate ="1931-12-11"^^xsd:date || ?population = "49003300" ) 
+
+
+}
+
+

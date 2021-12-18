@@ -1,0 +1,29 @@
+org.eclipse.rdf4j.query.MalformedQueryException: Encountered " "<" "< "" at line 1, column 13.
+Was expecting:
+    <Q_IRI_REF> ...
+    
+	at org.eclipse.rdf4j.query.parser.sparql.SPARQLParser.parseQuery(SPARQLParser.java:197)
+	at org.eclipse.rdf4j.query.parser.QueryParserUtil.parseQuery(QueryParserUtil.java:114)
+	at org.eclipse.rdf4j.query.parser.QueryParserUtil.parseTupleQuery(QueryParserUtil.java:135)
+	at org.eclipse.rdf4j.repository.sail.SailRepositoryConnection.prepareTupleQuery(SailRepositoryConnection.java:239)
+	at com.fluidops.fedx.sail.FedXSailRepositoryConnection.prepareTupleQuery(FedXSailRepositoryConnection.java:111)
+	at com.fluidops.fedx.sail.FedXSailRepositoryConnection.prepareTupleQuery(FedXSailRepositoryConnection.java:52)
+	at org.eclipse.rdf4j.repository.base.AbstractRepositoryConnection.prepareTupleQuery(AbstractRepositoryConnection.java:157)
+	at org.aksw.simba.start.QueryEvaluation.evaluate(QueryEvaluation.java:338)
+	at org.aksw.simba.start.QueryEvaluation.multyEvaluate(QueryEvaluation.java:402)
+	at org.aksw.simba.start.QueryEvaluation.main(QueryEvaluation.java:206)
+	at org.codehaus.mojo.exec.ExecJavaMojo$1.run(ExecJavaMojo.java:254)
+	at java.base/java.lang.Thread.run(Thread.java:832)
+Caused by: org.eclipse.rdf4j.query.parser.sparql.ast.ParseException: Encountered " "<" "< "" at line 1, column 13.
+Was expecting:
+    <Q_IRI_REF> ...
+    
+	at org.eclipse.rdf4j.query.parser.sparql.ast.SyntaxTreeBuilder.generateParseException(SyntaxTreeBuilder.java:8897)
+	at org.eclipse.rdf4j.query.parser.sparql.ast.SyntaxTreeBuilder.jj_consume_token(SyntaxTreeBuilder.java:8764)
+	at org.eclipse.rdf4j.query.parser.sparql.ast.SyntaxTreeBuilder.IRI(SyntaxTreeBuilder.java:7178)
+	at org.eclipse.rdf4j.query.parser.sparql.ast.SyntaxTreeBuilder.PrefixDecl(SyntaxTreeBuilder.java:280)
+	at org.eclipse.rdf4j.query.parser.sparql.ast.SyntaxTreeBuilder.Prolog(SyntaxTreeBuilder.java:241)
+	at org.eclipse.rdf4j.query.parser.sparql.ast.SyntaxTreeBuilder.QueryContainer(SyntaxTreeBuilder.java:199)
+	at org.eclipse.rdf4j.query.parser.sparql.ast.SyntaxTreeBuilder.parseQuery(SyntaxTreeBuilder.java:37)
+	at org.eclipse.rdf4j.query.parser.sparql.SPARQLParser.parseQuery(SPARQLParser.java:152)
+	... 11 more
