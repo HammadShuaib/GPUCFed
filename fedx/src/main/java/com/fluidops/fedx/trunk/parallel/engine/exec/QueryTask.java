@@ -80,6 +80,11 @@ import com.fluidops.fedx.structures.QueryInfo;
 
 public class QueryTask {
 //	private	static final org.apache.log4j.Logger logger = LogManager.getLogger(QueryTask.class.getName());
+
+	QueryEngineHTTP qexec = null;
+	ResultSet result = null ;	
+
+	
 	Multimap<String, ResultSet> pro = ArrayListMultimap.create();;
 	Multimap<String, Binding> proExt = ArrayListMultimap.create();;
 	public static int wfilter=0;
@@ -130,8 +135,8 @@ public class QueryTask {
 
 	}
 
-	public synchronized void setPro(String st, ResultSetMem rsm) {
-		pro.put(st, rsm);
+	public synchronized void setPro(String st, ResultSet result2) {
+		pro.put(st, result2);
 	}
 
 	public synchronized Multimap<String, ResultSet> getPro() {
@@ -312,13 +317,12 @@ public class QueryTask {
 			 */
 
 			//System.out.println("ThiOP12:"+query);
-			QueryEngineHTTP qexec = null;
+
 			int a=0;
 			// if(ParaEng.opq!=null) {
 		
 
 			// qString = qString.replace("}", "} LIMIT 100");
-	ResultSetMem result = null ;	
 	if(ParaEng.FiltereqLarge.size()==0 ||  ParaEng.FiltereqLarge.isEmpty()) {
 	if(QueryTask.wfilter==1)
 		{		
@@ -328,10 +332,10 @@ public class QueryTask {
 		if (BoundQueryTask.isBound == 1)			
 			
 		System.out.println("This is now creating extended query:" + query+ "--" + url+"--"+ext);
-		 result = new ResultSetMem(qexec.execSelect());// }).join();
+		 result = qexec.execSelect();// }).join();
 
-		if (BoundQueryTask.isBound == 1)
-			setPro(query.toString(), result);
+	//	if (BoundQueryTask.isBound == 1)
+	//		setPro(query.toString(), result);
 
 		}	
 			else
@@ -340,7 +344,7 @@ public class QueryTask {
 			//	 System.out.println("This is the string now in connection8989898989:"+query.toString()+"--"+ParaEng.InnerFilterSimple.isEmpty()+"--"+ParaEng.InnerFilterSimple.size());
 					
 				String qString="";
-				 if(!ParaEng.InnerFilterSimple.isEmpty() ||  ParaEng.InnerFilterSimple.size()>0)
+				 /*if(!ParaEng.InnerFilterSimple.isEmpty() ||  ParaEng.InnerFilterSimple.size()>0)
 				 {		
 				for(Entry<String, String> ifs:ParaEng.InnerFilterSimple.entrySet()) 
 					if(triple.getSubject().getName().toString().contains(ifs.getKey().substring(1))
@@ -357,21 +361,52 @@ public class QueryTask {
 				 }
 				 else
 					 {
-						
+				*/		
 					 // System.out.println("This is the string now in connection:"+query.toString());
-				
+							
 					 qString = QueryExtension(query);
-						System.out.println("This is now creating extended query01:" + qString + "--" + url+"--"+ext);
+				//		System.out.println("This is now creating extended query01:" + qString + "--" + url+"--"+ext);
+				//						String nString="";					
+					// }
+				//String qq="";		
+					 if(qString.contains("PREFIX"))
+				 qString=qString.toString().substring(0,qString.toString().indexOf("SELECT")-1)+" \n"+TripleExecution.ab+" "+ qString.toString().substring(qString.toString().indexOf("*")+1);
+					 else
+						 qString=TripleExecution.ab+" "+ qString.toString().substring(qString.toString().indexOf("*")+1);
 						
-					 }
-			//	 qString=TripleExecution.ab+" "+ qString.substring(qString.indexOf("*")+1);
+						 /*	 if(qString.contains("SELECT  ?enzyme ?cpd ?equation ?reaction"))
+				 qq="SELECT  ?enzyme ?cpd ?equation ?reaction \n"
+					 		+ "WHERE\n"
+					 		+ "  { { ?enzyme   a                     <http://bio2rdf.org/ns/kegg#Enzyme> .\n"
+					 		+ "     ?enzyme   <http://bio2rdf.org/ns/kegg#xSubstrate>  ?cpd. }\n"
+					 		+" { \n"
+					 		+ "    ?reaction  <http://bio2rdf.org/ns/kegg#xEnzyme>  ?enzyme .\n"
+					 		+ "     ?reaction         <http://bio2rdf.org/ns/kegg#equation>  ?equation .\n"
+					 		+ "} \n }";*/
+					//	System.out.println("This is now creating extended query02:" + qString.substring(qString.indexOf("*")+1) + "--" + url+"--"+ext);
 					
-				qexec = new QueryEngineHTTP(url, qString);
+						// String q=TripleExecution.ab+" "+ qString.toString().substring(qString.toString().indexOf("*")+1);
+					//	 nString=qString.substring(0,qString.indexOf("WHERE"))+"{ \n"+qString.substring(qString.indexOf("{"));
+					//	 for(int i=0;i<39;i++)
+						// nString=nString+"\n UNION "+qString.substring(qString.indexOf("{"));	
+						//	nString+="}";
+					//		System.out.println("This is now creating extended query03:" + qq);
+							//if(qq!="")
+							//qexec = new QueryEngineHTTP(url, qq);
+							//else
+								qexec = new QueryEngineHTTP(url, qString);
 			//	if (BoundQueryTask.isBound == 0)			
-				System.out.println("This is now creating extended query:" + qString + "--" + url+"--"+ext);
+				System.out.println("123123This is now creating extended query:" + qString + "--" + url+"--"+ext);
 				System.out.println("This is now creating extended query98889:" + qexec);
-				
-				result = new ResultSetMem(qexec.execSelect());// }).join();
+		//	result=	qexec.execSelect();
+				ExecutorService fjp = Executors.newWorkStealingPool();
+			try {
+					fjp.submit(()->{Stream.of(result =qexec.execSelect()).parallel();} ).get();
+				} catch (InterruptedException | ExecutionException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				fjp.shutdown();
 			// while(result.hasNext())
 			//		System.out.println("This is now result next next:" + result.next());
 				
@@ -469,7 +504,7 @@ public class QueryTask {
 		qexec = new QueryEngineHTTP(url, qString);
 	//	if (BoundQueryTask.isBound == 1)			
 		System.out.println("This is now creating extended query:" + qString+ "--" + url+"--"+ext+"--"+bounded);
-		 result = new ResultSetMem(qexec.execSelect());// }).join();
+		 result = qexec.execSelect();// }).join();
 
 		if (BoundQueryTask.isBound == 1)
 			setPro(query.toString(), result);
@@ -603,8 +638,7 @@ public class QueryTask {
 			// for(String q2:query.getResultVars())
 			// System.out.println("This is experiment3:"+q2);
 			// }
-			qexec.close();
-
+		
 			// ArrayList<ResultSet> rs = new ArrayList<>();
 			// rs.add(result);
 			return result;
@@ -661,7 +695,12 @@ public class QueryTask {
 		 if(ParaEng.Filtereq==null) 
 		 {			FilterString = " ";
 		if (FilterString == " ")
+		{
+			// String q1=TripleExecution.ab+" "+ q.toString().substring(q.toString().indexOf("*")+1);
+		//	 System.out.println("76767676767676This is the new query:"+q);
+		
 			return q.toString();
+		}
 		 }
 		 else {
 		for(Entry<HashMap<String, String>, String> fa:ParaEng.Filtereq.entrySet()) {
@@ -1050,12 +1089,22 @@ breaking=0;
 		 }
 //			////System.out.printlnln("This is the new query:"+queryString);
 		if (queryString == null) {
-			 String q1=TripleExecution.ab+" "+ q.toString().substring(q.toString().indexOf("*")+1);
-
-			return q1.toString();
+			// String q1=TripleExecution.ab+" "+ q.toString().substring(q.toString().indexOf("*")+1);
+			// System.out.println("01010101010010101This is the new query:"+q1);
+			return q.toString();
 		}
 		else
-			return queryString;
+		{
+			// String q1=TripleExecution.ab+" "+ queryString.toString().substring(queryString.toString().indexOf("*")+1);
+			//System.out.println("8989898989898989This is the new query:"+queryString);
+		//	String qa="";
+			//if(queryString.contains("xsd"))
+		//		qa="PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#> \n"+queryString;
+		//	else
+		//		qa=queryString;
+			//System.out.println("6767676767676767This is the new query:"+qa);
+				
+			return queryString.toString();}
 
 	}
 
