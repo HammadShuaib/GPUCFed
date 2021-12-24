@@ -136,8 +136,8 @@ if(x.equals(e.getKey().getNode().toString().replaceAll("[^A-Za-z]+", ""))) {
 	//		System.out.println("These are intermediate size:" + i1);
 	//for (Binding i1 : intermediate)
 		QueryTask.wfilter=0;
-//ciff="";
-//biff="";
+ciff="";
+biff="";
 		//	System.out.println("These are intermediate size:" + intermediate.size()+"--"+LocalTime.now());
 		List<Binding> a=new ArrayList<>();
 		   String b=null;
@@ -448,7 +448,7 @@ int l=0;
 //			}
 			
 		
-		if ( ParaEng.InnerFilter!=null && (!BGPEval.StartBinding123.containsKey(edge.getV1())) && !BGPEval.StartBinding123.containsKey(edge.getV1())) {
+	/*	if ( ParaEng.InnerFilter!=null && (!BGPEval.StartBinding123.containsKey(edge.getV1())) && !BGPEval.StartBinding123.containsKey(edge.getV1())) {
 			Iterator<Binding> rIterator;
 			List<Binding> temp1 = new ArrayList<>();
 			int br = 0;
@@ -536,7 +536,7 @@ int l=0;
 			}
 				
 		}
-
+*/
 	System.out.println("THis is the vertex of this query:");	
 				// Multimap<String, String> cars = ArrayListMultimap.create();
 	//	if (!BGPEval.StartBinding123.containsKey(start)) {
@@ -1278,7 +1278,7 @@ int l=0;
 					System.out.println("This is weired now:"+eq1+"--"+eq.getValue());
 					System.out.println("This is weired now1:"+te.getTriple()+"--"+eq.getValue());
 					int k=0;
-					if(ParaEng.InnerFilter!=null) {
+					/*if(ParaEng.InnerFilter!=null) {
 					List<Binding> a=new ArrayList<>();
 					   String b=null;
 					 String c=null;
@@ -1323,8 +1323,8 @@ int l=0;
 					}
 					if(k==1) {
 						k=0;
-					}
-					else if(HashJoin.Completed890.size()>0 || !HashJoin.Completed890.isEmpty())
+					}*/
+				/*	if(HashJoin.Completed890.size()>0 || !HashJoin.Completed890.isEmpty())
 					{
 					String skip=te.getTriple()+"--"+eq.getValue();
 			for(String c:HashJoin.Completed890) {
@@ -1337,7 +1337,7 @@ int l=0;
 					else if (HashJoin.Completed890.contains(skip))
 						continue;
 					}
-			else
+			else*/
 				results =te.exec(intermediate,eq1.getKey());
 					
 					if(QueryTask.unExecuted==1 &&QueryTask.falsified==0 && ((results == null || results.size() == 0))) {
@@ -1350,8 +1350,8 @@ int l=0;
 			if(results!=null || !results.isEmpty())
 			System.out.println("These are size of result in BindJoin:" + results.size());
 
-			if(QueryTask.bounded==0)
-				HashJoin.Completed890.add(te.getTriple()+"--"+eq.getValue());
+			//if(QueryTask.bounded==0)
+				//HashJoin.Completed890.add(te.getTriple()+"--"+eq.getValue());
 				
 			QueryTask.notInclined=0;
 			int br=0;
