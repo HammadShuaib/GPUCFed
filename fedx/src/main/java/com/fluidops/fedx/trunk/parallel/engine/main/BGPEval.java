@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -57,6 +58,7 @@ import org.apache.jena.sparql.serializer.SerializationContext;
 //import org.apache.log4j.LogManager;
 
 import com.fluidops.fedx.optimizer.Optimizer;
+import com.fluidops.fedx.optimizer.StatementGroupOptimizer2;
 import com.fluidops.fedx.structures.Endpoint;
 import com.fluidops.fedx.trunk.config.Config;
 import com.fluidops.fedx.trunk.graph.Edge;
@@ -64,6 +66,7 @@ import com.fluidops.fedx.trunk.graph.SimpleGraph;
 import com.fluidops.fedx.trunk.graph.Vertex;
 import com.fluidops.fedx.trunk.parallel.engine.ParaEng;
 import com.fluidops.fedx.trunk.parallel.engine.exec.QueryTask;
+import com.fluidops.fedx.trunk.parallel.engine.exec.TripleExecution;
 import com.fluidops.fedx.trunk.parallel.engine.exec.operator.BindJoin;
 import com.fluidops.fedx.trunk.parallel.engine.exec.operator.EdgeOperator;
 import com.fluidops.fedx.trunk.parallel.engine.exec.operator.HashJoin;
@@ -89,22 +92,29 @@ public class BGPEval extends QueryIteratorBase {
 	static ResultSet v = null;
 	static int ij1 = 0;
 	static int type1;
+	static int axx=0;
 	static List<File> fList = new ArrayList<>();
 	static int ltsize = 0;
+	List<Binding> fin = new ArrayList<>();
+	List<Binding> resultsRight =
+			new ArrayList<Binding>();
+	List<Binding> resultsLeft =
+			new ArrayList<Binding>();
 	public static  Set<String> bindEstimator = new HashSet<>();
 	static List<EdgeOperator> Done = new ArrayList<>();
 	public static HashMap<EdgeOperator,EdgeOperator> urim = new HashMap<>();
 public	static HashMap<Vertex,List<Binding>> urik = new HashMap<>();
 public	static Set<EdgeOperator> urik_element = new HashSet<>();
 //static LinkedHashMap<EdgeOperator, List<Binding>>  delayedExecution = new LinkedHashMap<>();
-static ArrayList<String> temp999 = new ArrayList<>();
+static List<String> temp999 =
+Collections.synchronizedList(new ArrayList<String>());
+
 	static List<List<String>> lt = new ArrayList<>();
 	static List<ResultSet> resultSetList = new ArrayList<>();
 	static List<List<String>> rowsLeft = new ArrayList<>();
 	public static Set<Var> ProcessedVertexT = new HashSet<>();
 	public static List<Edge> DoubleStartBinding=new ArrayList<>();
 	public static Multimap<Edge, String> DoubleStartBindingLarge = ArrayListMultimap.create();
-	String baaa=null;
 	
 public static	List<EdgeOperator> OptionalAll = new ArrayList<>();
 static EdgeOperator eo1;
@@ -116,13 +126,14 @@ static EdgeOperator eo2;
 	public static int ExclusivelyExclusive = 0;
 	public static ConcurrentHashMap<ConcurrentHashMap<Set<Vertex>, Set<Edge>>, ArrayList<Binding>> StartBinding = new ConcurrentHashMap<>();
 	public static ConcurrentHashMap<ConcurrentHashMap<Set<Vertex>, Set<Edge>>, ArrayList<Binding>> StartBindingBJ = new ConcurrentHashMap<>();
-	public static HashMap<Multimap<Edge, Vertex>, ArrayList<Binding>> StartBindingFinal =   new HashMap<>();//ArrayListMultimap.create();
+	public static HashMap<Multimap<Edge, Vertex>, Integer> StartBindingFinal =   new HashMap<>();//ArrayListMultimap.create();
 	public static HashMap<HashMap<HashMap<Edge, Vertex>,String>, ArrayList<Binding>> StartBindingFinalLarge =  new HashMap<>();
 
 	static	LinkedListMultimap<Edge, Vertex>	StartBindingFinalKey = LinkedListMultimap.create();
 	public static Map<EdgeOperator, Integer> joinGroupUnion = new HashMap<>();
 	public static Map<EdgeOperator, Integer> joinGroupMinus = new HashMap<>();
-
+	String bt="";
+	
 	public static Map<String, String> HeaderReplacement = new HashMap<>();
 	int o = 0;
 	static int e = 0;
@@ -672,7 +683,6 @@ static EdgeOperator eo2;
 			
 			while (Operators_BushyIterator.hasNext()) {
 				EdgeOperator xy = Operators_BushyIterator.next();
-				//.out.println("This is bushyTree edge:"+xy.getEdge().getTriple());
 				
 				if (xy.getEdge().getTriple().getSubject().isURI())
 					sub1 = xy.getEdge().getTriple().getSubject().toString().replace("[<>]", "");
@@ -688,7 +698,7 @@ static EdgeOperator eo2;
 				else
 					obj1 = xy.getEdge().getV2().getNode().toString();
 				//System.out.println("This is bushyTree Subject:"+obj1+"--"+sub1);
-				
+							
 				for (int i = 0; i < ijkl.length; i++) {
 					if (!ijkl[i].equals("")) {
 
@@ -700,13 +710,13 @@ static EdgeOperator eo2;
 								Operators_BushyIterator.remove();
 							}
 						} else {
-					//		System.out.println("THis is the issue here:"+sub1+"--"+obj1);
-						//	if(i + 2<ijkl.length)
-						//		System.out.println("THis is the issue1 here:"+ijkl[i]+"--"+ijkl[i + 2]);
+						//	System.out.println("THis is the issue here:"+sub1+"--"+obj1);
+							//if(i + 2<ijkl.length)
+							//System.out.println("THis is the issue1 here:"+ijkl[i]+"--"+ijkl[i + 2]);
 							
-								if (sub1.toString().equals(ijkl[i].toString().replace("\t", ""))
-									&& obj1.toString().equals(ijkl[i + 2].toString())) {
-								//System.out.println("This is bushyTree Subject"+i+"--"+sub1+"--"+obj1+"--"+xy);
+								if (sub1.toString().equals(ijkl[i].toString().replace("\t", "").replaceAll("\n", ""))
+									&& obj1.toString().equals(ijkl[i + 2].toString().replace("\t", "").replaceAll("\n", ""))) {
+								//System.out.println("123445678This is bushyTree Subject"+i+"--"+sub1+"--"+obj1+"--"+xy);
 								for (Entry<EdgeOperator, Integer> xz : joinGroupUnion.entrySet())
 									if (xz.getKey().equals(xy))
 										joinGroupUnion.replace(xy, 1);
@@ -789,17 +799,17 @@ static EdgeOperator eo2;
 			}
 		}
 
-		// for( Entry<EdgeOperator,Integer> xz:joinGroupUnion.entrySet()) {
-		// System.out.println("These are the union status:"+xz);
-		// }
+	//	 for( EdgeOperator xz:operators_optional) {
+	//	 System.out.println("These are the union status:"+xz);
+	//	 }
 //		System.out.println("1Getting individual operators 4 element:"+"--"+operators_optional);
 //		System.out.println("2Getting individual operators 4 element:"+"--"+operators_BushyTree);
 
 		
-		for(Entry<String, Integer> po:ParaEng.OptionalOrder.entrySet())
+	//	for(Entry<String, Integer> po:ParaEng.OptionalOrder.entrySet())
 		//	 System.out.println("This is now the line with index:"+po.getKey()+"--"+po.getValue());		
 			for(EdgeOperator oo:operators_optional)
-			{//	 System.out.println("This is now the line with index 123456:"+oo);		
+			{	 System.out.println("This is now the line with index 123456:"+oo);		
 			if(operators_BushyTree.contains(oo)) {
 				operators_BushyTree.remove(oo);
 				operators_BushyTreeRight.remove(oo);
@@ -822,8 +832,8 @@ static EdgeOperator eo2;
 					
 				}
 				
-			for(EdgeOperator obt:operators_BushyTree)
-	System.out.println("THis is good enough:"+obt);
+//			for(EdgeOperator obt:operators_BushyTree)
+//	System.out.println("THis is good enough:"+obt);
 			
 				Set<EdgeOperator> URIbased = new HashSet<>();
 		Set<EdgeOperator> uris = new HashSet<>();
@@ -1850,26 +1860,23 @@ System.out.println("This is operators_BushyTreeLeft:"+operators_BushyTreeLeft);
 		        Set<List<EdgeOperator>> grouping = new HashSet<>();
 		        List<EdgeOperator> grouping_sub = new ArrayList<>();	
 
-	            String query="/mnt/hdd/hammad/hammad/query/"+fileName;;
-
-	            String curQuery=null;
-	            File file = new File(query);
+	        
+	            String curQuery=ParaEng.Optional;
+	            	            /*File file = new File(query);
 	         try {
-				 curQuery=  FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+				 curQ=  FileUtils.readFileToString(file, StandardCharsets.UTF_8);
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
 
-	            
-	//System.out.println("This is the file that is read:"+Arrays.toString(list.toArray()));     
+	            */
+	System.out.println("This is the file that is read123123:"+curQuery);     
 int i=-1;
-if(curQuery.contains("OPTIONAL")) {
-String s9=curQuery.substring(curQuery.indexOf("OPTIONAL")).replaceAll("\\}", "").replaceAll("\\{", "").replaceAll("$","?").replaceAll(".(?m)^*\r?\n", "").replaceAll("\t","");				
-s9=s9.replaceAll("\\$", "?");
-s9=s9.replaceAll("$", "?");
-s9=s9.replaceAll("OPTIONAL", "");
-//System.out.println("This is the biggest biggest biggest123123123:"+operators_optional);
+String s9=curQuery.replaceAll("\\$", "?");
+s9=curQuery.replaceAll("$", "?");
+s9=curQuery.replaceAll("OPTIONAL", "");
+System.out.println("This is the biggest biggest biggest123123123:"+operators_optional);
 
 for(String s10:s9.split("\n")) {
 	
@@ -1883,25 +1890,25 @@ for(String s10:s9.split("\n")) {
 				String[] s11=s10.split(" ");
 			//	for(String ss11:s11)
 			//	System.out.println("This is the main problem right now:"+ss11);
-
+			///	if(!s10.contains("\'"))
+					
 				for(EdgeOperator it1:operators_optional) 
 				{				for(i=0;i<s11.length;i+=1)
 						
-				//	System.out.println("This is the main problem right now0000000000:"+s11[i]);
-				if((s11[i].startsWith("?") || s11[i].startsWith("\"")) && i+2<s11.length && !s11[i].contains(":")) {
-							System.out.println("This is the main problem right now:"+s11[i]+"--"+s11[i+2]+"--"+it1.getEdge());
-					if(it1.getEdge().getV1().equals(Vertex.create(StageGen.StringConversion(s11[i].substring(1)))) &&
-							it1.getEdge().getV2().equals(Vertex.create(StageGen.StringConversion(s11[i+2].substring(1)))) )
-
+					//System.out.println("This is the main problem right now0000000000:"+s11[i]);
+					if((s11[i].startsWith("?")) && i+2<s11.length && !s11[i].contains(":")) {
+							System.out.println("This is the main problem right now:"+it1.getEdge().getV1()+"--"+it1.getEdge().getV2()+"--"+Vertex.create(StageGen.StringConversion(s11[i].replace("??", "?").substring(1)))+"--"+Vertex.create(StageGen.StringConversion(s11[i+2].replace("??", "?").substring(1))));
+					if(it1.getEdge().getV1().equals(Vertex.create(StageGen.StringConversion(s11[i].replace("??", "?").substring(1)))) &&
+							it1.getEdge().getV2().equals(Vertex.create(StageGen.StringConversion(s11[i+2].replace("??", "?").substring(1)))) )
+					{
 				grouping_sub.add(it1);
-				
+					}
 				}
 				}
 			grouping.add(grouping_sub);
 		}
 	}
 	System.out.println("This is greater good1111111:"+grouping);
-}
 				
 for(List<EdgeOperator> g:grouping)					{
 	if(g.size()>1)		
@@ -2104,12 +2111,17 @@ for(List<EdgeOperator> g:grouping)					{
 		for (List<EdgeOperator> jge : JoinGroupsListExclusive)
 			{
 			Temp00.add(jge.parallelStream().distinct().collect(Collectors.toList()));
-			System.out.println("This is jgeeeeeeeeeeewwwww before:" + jge);
 			}
 		
 		JoinGroupsListExclusive.clear();
 		JoinGroupsListExclusive.addAll(Temp00);
 		
+		for (List<EdgeOperator> jge : JoinGroupsListExclusive)
+		{
+	
+		System.out.println("This is jgeeeeeeeeeeewwwww before:" + jge);
+		}
+	
 		for(EdgeOperator obo:operators_BushyTreeOrder1)
 		for(EdgeOperator jgll:JoinGroupsListLeft)
 		if(obo.getEdge().equals(jgll.getEdge()))
@@ -2117,6 +2129,12 @@ for(List<EdgeOperator> g:grouping)					{
 		JoinGroupsListLeft.clear();
 		JoinGroupsListLeft.addAll(Temp);
 		
+		for (EdgeOperator jge : JoinGroupsListLeft)
+		{
+	
+		System.out.println("This is jgeeeeeeeeeeewwwww left before:" + jge);
+		}
+	
 	//	for(EdgeOperator jgll:JoinGroupsListLeft)
 		//	System.out.println("This is the new group after:" + jgll);
 	
@@ -2162,8 +2180,24 @@ Temp = new HashSet<>();
 	
 			
 			JoinGroupsListLeftTemp.clear();
-			JoinGroupsListLeftTemp.add(JoinGroupsListLeft);
-			JoinGroupsListLeftTemp.add(JoinGroupsListRight);
+			
+			List<List<EdgeOperator>> jgllt = new ArrayList<>();
+			for(EdgeOperator jgl:JoinGroupsListLeft)
+			{
+				List<EdgeOperator> n = new ArrayList<>();
+				n.add(jgl);
+				jgllt.add(n);
+			}
+			 jgllt = new ArrayList<>();
+			for(EdgeOperator jgl:JoinGroupsListRight)
+			{
+				List<EdgeOperator> n = new ArrayList<>();
+				n.add(jgl);
+				jgllt.add(n);
+			}
+			JoinGroupsListLeftTemp.addAll(jgllt);
+//			JoinGroupsListLeftTemp.add(JoinGroupsListLeft);
+//			JoinGroupsListLeftTemp.add(JoinGroupsListRight);
 			JoinGroupsListLeftTemp.addAll(JoinGroupsListExclusive);
 
 			ForkJoinPool fjp111 = new ForkJoinPool();
@@ -2203,6 +2237,12 @@ Temp = new HashSet<>();
 			JoinGroupsListLeftTemp.add(JoinGroupsListLeftOptional);
 			JoinGroupsListLeftTemp.add(JoinGroupsListRightOptional);
 
+			
+			for (EdgeOperator jge : operators_BushyTreeOrder)
+				System.out.println("1111This is jgeeeeeeeeeeewwwww before:" + jge);
+	
+	for (EdgeOperator jge : JoinGroupsListLeftOptional)
+		System.out.println("1111This is jgeeeeeeeeeeewwwww213213123 before:" + jge); 
 			ForkJoinPool fjp111 = new ForkJoinPool();
 			fjp111.submit(() -> enableBindJoinsOptional(JoinGroupsListLeftTemp, JoinGroupsListExclusive,
 					JoinGroupsListLeft, JoinGroupsListRight,JoinGroupsListOptional,
@@ -2218,7 +2258,7 @@ Temp = new HashSet<>();
 
 		}
 
-		else		if (ParaEng.Minus.contains("MINUS")) {
+		/*else		if (ParaEng.Minus.contains("MINUS")) {
 			JoinGroupsListLeftTemp.clear();
 			JoinGroupsListLeftTemp.add(JoinGroupsListLeft);
 			JoinGroupsListLeftTemp.add(JoinGroupsListRight);
@@ -2235,17 +2275,35 @@ Temp = new HashSet<>();
 			for (List<EdgeOperator> jge : JoinGroupsListExclusive)
 				System.out.println("This is jgeeeeeeeeeeewwwww:" + jge);
 
-		}
+		}*/
 		else {
+			for (EdgeOperator jge : operators_BushyTreeOrder)
+				System.out.println("2222This is jgeeeeeeeeeeewwwww before:" + jge);
+	
+	for (EdgeOperator jge : JoinGroupsListLeftOptional)
+		System.out.println("2222This is jgeeeeeeeeeeewwwww213213123 before:" + jge);
+			System.out.println("This is going to work00000");
 			JoinGroupsListLeftTemp.clear();
-
-		
-			JoinGroupsListLeftTemp.add(JoinGroupsListLeft);
-			JoinGroupsListLeftTemp.add(JoinGroupsListRight);
+List<List<EdgeOperator>> jgllt = new ArrayList<>();
+for(EdgeOperator jgl:JoinGroupsListLeft)
+{
+	List<EdgeOperator> n = new ArrayList<>();
+	n.add(jgl);
+	jgllt.add(n);
+}
+ jgllt = new ArrayList<>();
+for(EdgeOperator jgl:JoinGroupsListRight)
+{
+	List<EdgeOperator> n = new ArrayList<>();
+	n.add(jgl);
+	jgllt.add(n);
+}
+JoinGroupsListLeftTemp.addAll(jgllt);
+			//JoinGroupsListLeftTemp.add(JoinGroupsListRight);
 			JoinGroupsListLeftTemp.addAll(JoinGroupsListExclusive);
 
 			System.out.println("THis is oooooo:" + JoinGroupsListLeftTemp);
-			System.out.println("This is going to work00000");
+			
 			ForkJoinPool fjp11 = new ForkJoinPool();
 			fjp11.submit(() -> enableBindJoins(JoinGroupsListLeftTemp, JoinGroupsListExclusive, JoinGroupsListLeft,
 					JoinGroupsListRight)).join();
@@ -2276,13 +2334,30 @@ Temp = new HashSet<>();
 		fjp11.shutdown();
 		
 		for (List<EdgeOperator> jge : JoinGroupsListExclusive)
-			System.out.println("This is jgeeeeeeeeeeewwwww:" + jge);
+			System.out.println("This is jgeeeeeeeeeeewwwww after:" + jge);
 
+		for (EdgeOperator jge : JoinGroupsListLeft)
+			System.out.println("This is jgeeeeeeeeeeewwwww left after:" + jge);
 		for (List<EdgeOperator> jge : JoinGroupsListOptional)
 			System.out.println("This is jgeeeeeeeeeeewwwwwOptional:" + jge);
 
 		for (List<EdgeOperator> jge : JoinGroupsListMinus)
 			System.out.println("This is jgeeeeeeeeeeewwwwwOptional:" + jge);
+
+		HashMap<Multimap<Edge, Vertex>, Integer> sbf = new HashMap<>();
+		int xy=0;
+		for(Entry<Multimap<Edge, Vertex>, Integer> dsb:StartBindingFinal.entrySet())
+		{
+			if(!sbf.containsKey(dsb.getKey()))
+			sbf.put(dsb.getKey(), xy);
+		//	dsb.setValue(xy);
+		xy++;
+		}
+		StartBindingFinal.clear();
+		StartBindingFinal.putAll(sbf);
+		sbf.clear();
+	for(Entry<Multimap<Edge, Vertex>, Integer> dsb:StartBindingFinal.entrySet())
+		System.out.println("This was CH1 problem last:"+dsb);
 
 //ForkJoinPool fjp1 = new ForkJoinPool();
 //fjp1.submit(()->
@@ -3526,7 +3601,7 @@ if(i11.getEdge().toString().equals(ue1.getEdge().toString()))
 							for (EdgeOperator jggl1 : jggl) {
 								if (jggl1.getEdge().getV1().equals(t.getKey().getStartVertex())
 										|| jggl1.getEdge().getV2().equals(t.getKey().getStartVertex())) {
-									for (Entry<Multimap<Edge, Vertex>, ArrayList<Binding>> gst : StartBindingFinal
+									for (Entry<Multimap<Edge, Vertex>, Integer> gst : StartBindingFinal
 											.entrySet())
 										for (Entry<Edge, Vertex> gst1 : gst.getKey().entries())
 											if (jggl1.getEdge().equals(gst1.getKey())) {
@@ -3569,6 +3644,8 @@ if(i11.getEdge().toString().equals(ue1.getEdge().toString()))
 							TempDone.add(et.getKey());
 					}
 				}
+		System.out.println("000This is current problem finalResult88888888:" +LocalTime.now()+"--"+ TempBind);
+
 		for (Entry<EdgeOperator, List<Binding>> t : Temp1.entrySet())
 			for (Entry<EdgeOperator, List<Binding>> t11 : Temp1.entrySet())
 		if (t.getKey().toString().contains("Bind") && t11.getKey().toString().contains("Bind")
@@ -3576,7 +3653,7 @@ if(i11.getEdge().toString().equals(ue1.getEdge().toString()))
 			adjustEdgeOperator( TempDone,TempBind,TempBind1,t,t11,JoinGroupsListLeft);	
 		}
 		
-		System.out.println("This is current problem finalResult88888888:" + TempBind);
+		System.out.println("This is current problem finalResult88888888:" +LocalTime.now()+"--"+ TempBind);
 
 		for (Entry<EdgeOperator, List<Binding>> t : Temp1.entrySet())
 			for (Entry<EdgeOperator, List<Binding>> t11 : Temp1.entrySet())
@@ -3609,7 +3686,7 @@ if(i11.getEdge().toString().equals(ue1.getEdge().toString()))
 		}
 		// for(EdgeOperator td:TempDone)
 		// if(!TempBind1.containsKey(td))
-		System.out.println("This is the new group list of JoinGroupsListLeft333333333:" + TempBind1);
+		System.out.println("This is the new group list of JoinGroupsListLeft333333333:" +org.joda.time.LocalTime.now()+"--"+ TempBind1);
 		
 		PartitionedExecutions(TempBind1,TempBind1, "Norm");
 
@@ -4160,153 +4237,24 @@ System.out.println("This is the new group list of JoinGroupsListLeft88888888:" +
 	//for(Binding e2:e1.iterator())
 //System.out.println("This is the binding in JoinedTriples:"+e2);		
 
-if ( ParaEng.InnerFilter!=null) {
-	
-	for(List<Binding> e1:HashJoin.NotJoinedTriples.values()) {
-		List<Var> joinVarsList1 = new ArrayList<>();
-		Var joinVars1 = null;
-	Iterator<Binding> rIterator1 = e1.iterator();
-	List<Binding> temp11 = new ArrayList<>();
-	int br1 = 0;
-
-
-	Iterator<Var> l111=null;
-	//Set<Vertex> v1 = new HashSet<>();
-//	Multimap<Vertex,String> v1 = ArrayListMultimap.create();
-	while(rIterator1.hasNext()) 
-		l111 = rIterator1.next().vars();
-	String f = null;
-//		for(Binding r:results)
-	int keyOrvalue=0;	
-	
-	if(l111!=null)
-		while (l111.hasNext()) {
-			
-			Var v3 = l111.next();
-			
-		//	System.out.println("This is rule no.3 in StartBinding123Large: BGPEval" + v3);
-						
-					for(Entry<HashMap<String, List<Binding>>, HashMap<String, List<Binding>>> iff:ParaEng.InnerFilter.entrySet())
-{	for(Entry<String, List<Binding>> iff1:iff.getKey().entrySet())
-	{		Var r = Var.alloc(iff1.getKey().substring(1));
-		//	System.out.println("This is rule no.3 in StartBinding123Larsge:" + r + "--" + v3);
-			joinVarsList1.add(v3);
-			if (r.equals(v3)) {
-			//	joinVarsList.add(v3);
-				keyOrvalue=1;
-				f=iff1.getKey();
-				joinVars1 = v3;
-				br1 = 1;
-		//		break;
-			}
-
-		}
-if(joinVars1==null) {
-	for(Entry<String, List<Binding>> iff1:iff.getValue().entrySet())
-	{		Var r = Var.alloc(iff1.getKey().substring(1));
-			//System.out.println("This is rule no.3 in StartBinding123Large:" + r + "--" + v3);
-			joinVarsList1.add(v3);
-			if (r.equals(v3)) {
-				//joinVarsList.add(v3);
-				keyOrvalue=2;
-				f=iff1.getKey();
-				joinVars1 = v3;
-				br1 = 1;
-		//		break;
-			}
-
-		}
-}
-}
-		//if (br == 1) {
-		//	br = 0;
-		//	break;
-		//}
-		}
-//	System.out.println("This is timing within postprocess3:"+LocalTime.now());
-
-	if (joinVars1 != null) {
-//			for(Var jvl:joinVarsList1)
-		
-		for (Binding e11 : e1) {
-			BindingHashMap extend = new BindingHashMap();// TODO do not use a new binding map
-			
-		//	System.out.println("These are the problems:"+e1.toString().replace("<", "").replace(">", "").replace("\"", ""));
-			//List<Binding> t_temp=new ArrayList<>();
-			for(Var jvl:joinVarsList1)
-			{	
-			//	System.out.println("This is rule no. 2 in BindJoin123123123123:" + jvl+"--"+e11.get(jvl));
-											
-			if (e11.get(jvl) != null) {
-				if (e11.get(jvl).toString().contains("http"))
-					extend.addAll(BindingFactory.binding(jvl, StageGen.StringConversion(e11.get(jvl)
-							.toString().replace("<", "").replace(">", "").replace("\"", "").replace(" ", ""))));
-				else
-					extend.addAll(BindingFactory.binding(jvl, StageGen.StringConversion(
-							e11.get(jvl).toString().replace("<", "").replace(">", "").trim())));
-			//	System.out.println("This is rule no. 2 in BindJoin00000111111:" + extend);	
-			}
-			
-			}
-			temp11.add(extend);
-			
-		}
-	
-	Iterator<Entry<HashMap<String, List<Binding>>, HashMap<String, List<Binding>>>> ifiterator = ParaEng.InnerFilter.entrySet().iterator();
-	while(ifiterator.hasNext()) {
-	Entry<HashMap<String, List<Binding>>, HashMap<String, List<Binding>>> ifnext = ifiterator.next();
-	if(keyOrvalue==1)
-	ifnext.getKey().replace(f, temp11);
-	if(keyOrvalue==2)
-		
-	ifnext.getValue().replace(f, temp11);
-	}	
-	}
-	
-	
-	
-	}
-
-}
-
-Set<String> ab= new HashSet<>(); 
-List<Binding> resultsBq =
-new ArrayList<Binding>();
-
-	for(	Entry<HashMap<String, List<Binding>>, HashMap<String, List<Binding>>> eh: ParaEng.InnerFilter.entrySet())
-	{
-	for(Entry<String, List<Binding>> ee:eh.getValue().entrySet()) {
-	
-	Var r = Var.alloc(ee.getKey().substring(1));
-
-	
-	ee.getValue().stream().forEach(e11->{
-		if(e11.get(r).toString().contains("@"))
-			 baaa=e11.get(r).toString().substring(0,e11.get(r).toString().indexOf("@")).replaceAll("\"", "");
-			else
-				baaa=e11.get(r).toString().replaceAll("\"", "");
-		
-		for(Entry<String, List<Binding>> ee1:eh.getKey().entrySet()) {
-			
-			BindingHashMap extend = new BindingHashMap();// TODO do not use a new binding map
-			
-		
-			//int k11=0;
+	//int k11=0;
 		//	Var r12 = Var.alloc(ee1.getKey().substring(1));
 			
-			ee1.getValue().parallelStream().forEach(e111->{	if(e111.toString().contains(baaa))
-			{
-				extend.addAll(e111);
-				extend.addAll(e11);
-			//	System.out.println("This is equality of condition:"+extend);
-				if(!resultsBq.contains(extend))
-				resultsBq.add(extend);
-			}
+		//	ee1.getValue().parallelStream().forEach(e111->{	if(e111.toString().contains(baaa))
+		//	{BindingHashMap extend = new BindingHashMap();
+		//	extend.addAll(e111);
+				
+	//		extend.addAll(e11);
+				
+			//	System.out.println("This is equality of condition:"+baaa+"--"+extend);
+				//if(!resultsRight.contains(extend))
+		//		resultsRight.add(extend);
+	//		}
 				//System.out.println("This is timing within postprocess454545454545 BGPEval value:"+baaa+"--"+e111);
-});
+//});
 
 		
-		}}); 
+	//	}}); 
 	//	String a=null;
 		
 			
@@ -4324,8 +4272,8 @@ new ArrayList<Binding>();
 					extend.addAll(e111);
 					extend.addAll(e11);
 				//	System.out.println("This is equality of condition:"+extend);
-					if(!resultsBq.contains(extend))
-					resultsBq.add(extend);
+					if(!resultsRight.contains(extend))
+					resultsRight.add(extend);
 					//System.out.println("This is equality of condition:"+e111.get(r12)+"--"+e11.get(r));
 					}*/
 					//	extend1.add(BindingFactory.binding(r12,e111.get(r12)));
@@ -4343,21 +4291,21 @@ new ArrayList<Binding>();
 		
 	//	}
 
-	}
+	//}
 	//	k1++;
 	//	extend.add(BindingFactory.binding(r,e11.get(r)));
 		
 		
-		}
+	//	}
 	//});
 //	}
 	//}
 //	}
-for (Binding b : resultsBq)
-	System.out.println("This is equailty of condition:" + b);
+//resultsRight.parallelStream().forEach(e->System.out.println("This is equailty of condition:" + e));
+	//System.out.println("This is equailty of condition:" + b);
 
-for (Binding b : resultsBq)
-	System.out.println("This is equailty of condition totality:" + b);
+//for (Binding b : resultsRight)
+//	System.out.println("This is equailty of condition totality:" + b);
 		for (Entry<HashMap<List<EdgeOperator>, String>, List<Binding>> b : HashJoin.JoinedTriplesLarge.entrySet())
 			System.out.println("This is before finalization:" + b.getKey() + "--"
 					+ b.getValue());
@@ -4365,7 +4313,12 @@ for (Binding b : resultsBq)
 			for(Binding d:b.getValue())
 			System.out.println("This is before finalization not:" + b.getKey() + "--"
 					+ d);
-		if(ParaEng.FiltereqLarge.size()==0 ||  ParaEng.FiltereqLarge.isEmpty()) {	
+		if(ParaEng.InnerFilter.size()>0 || !ParaEng.InnerFilter.isEmpty())
+		{
+			//for(Binding rr:resultsRight)
+			r1.addAll(innerFilterProcess());
+		}
+		else if(ParaEng.FiltereqLarge.size()==0 ||  ParaEng.FiltereqLarge.isEmpty()) {	
 	if(!HeaderReplacement.isEmpty() || HeaderReplacement.size()>0) {
 			for (List<Binding> b : HashJoin.JoinedTriples.values())
 		{//	for(Binding b1:b) {
@@ -4488,9 +4441,12 @@ if(r1.size()==0 || r1.isEmpty())
 	r1.addAll(fr.getValue());
 	break;
 	}
-
 results1.addAll(r1);
+
 r3 = r1;
+//for(Binding rr:r3)
+//	System.out.println("THis is the main main main main purpose:"+rr);
+
 		results = r3.iterator();
 		/*
 		for(	Entry<HashMap<String, Set<Binding>>, HashMap<String, Set<Binding>>> eh:ParaEng.InnerFilter.entrySet())
@@ -5258,7 +5214,7 @@ if(eo2==null && isExecutable==0) {
 					if (Done.contains(eo.getKey()))
 						continue;
 			
-	System.out.println("This is finalization998:" + eo + "--" + LocalTime.now());
+	System.out.println("This is finalization998:" +LocalTime.now()+"--"+ eo + "--" + LocalTime.now());
 			Stream.of(eo.getKey().setInput(null)).parallel().forEach(e1 -> {
 				ForkJoinPool fjp_bind7 = new ForkJoinPool();
 
@@ -6470,6 +6426,10 @@ System.out.println("THis is Tempf2:"+JoinGroupsListExclusive);
 	//	Set<List<EdgeOperator>> jglset = new HashSet<>();
 	//	jglset.addAll(joinGroupsList2);
 
+		for (List<EdgeOperator> jgl2 : joinGroupsList2)
+			System.out.println("THis is beginning2 of jgl2:" + jgl2);
+
+		
 					for (List<EdgeOperator> jgl : jglset11) {
 						temp1 = new ArrayList<>();
 					temp2 = new ArrayList<>();
@@ -6613,6 +6573,8 @@ System.out.println("THis is Tempf2:"+JoinGroupsListExclusive);
 
 			}
 		}
+		 for(List<EdgeOperator> jgl:joinGroupsList2)
+		 System.out.println("123This is joinGroupList loop:"+jgl);
 
 		t1 = new ArrayList<>();
 		t2 = new ArrayList<>();
@@ -6626,12 +6588,17 @@ System.out.println("THis is Tempf2:"+JoinGroupsListExclusive);
 			if(JoinGroupsListRight.size()>0)
 			jglset111.add(JoinGroupsListRight);
 			
-		for (List<EdgeOperator> jgl : joinGroupsList2)
-			System.out.println("These are the purposes1:" + jgl.parallelStream().distinct().collect(Collectors.toList()));
 	//	Set<List<EdgeOperator>> jglset = new HashSet<>();
 	//	jglset.addAll(joinGroupsList2);
 
-					for (List<EdgeOperator> jgl : jglset111) {
+		for (List<EdgeOperator> jgl2 : joinGroupsList2)
+			System.out.println("THis is beginning3 of jgl2:" + jgl2);
+
+		for (List<EdgeOperator> jgl2 : jglset111)
+			System.out.println("THis is beginning312312312 of jgl2:" + jgl2);
+
+		
+		for (List<EdgeOperator> jgl : jglset111) {
 						temp1 = new ArrayList<>();
 					temp2 = new ArrayList<>();
 						temp3 = new ArrayList<>();
@@ -6677,7 +6644,7 @@ System.out.println("THis is Tempf2:"+JoinGroupsListExclusive);
 					System.out.println("This is temp3:"+temp1);
 					System.out.println("This is temp4:"+temp2);
 
-					
+					if(temp2.size()>0 || !temp2.isEmpty()) {
 					for (List<EdgeOperator> jg1l : joinGroupsList2)
 						System.out.println("These are the purposes1.5:" + jg1l);
 
@@ -6759,7 +6726,7 @@ System.out.println("THis is Tempf2:"+JoinGroupsListExclusive);
 
 					}
 		
-					
+		}
 					for (List<EdgeOperator> jgl : joinGroupsList2)
 						System.out.println("These are the purposes2:" + jgl);
 				
@@ -6962,7 +6929,7 @@ System.out.println("THis is Tempf2:"+JoinGroupsListExclusive);
 					System.out.println("This is bindEdges be:"+be);
 					for (EdgeOperator he : HashEdges)
 						System.out.println("This is hashEdges he:"+he);
-
+					
 						for (EdgeOperator be : BindEdges)
 					for (EdgeOperator he : HashEdges)
 					{
@@ -6975,8 +6942,12 @@ System.out.println("THis is Tempf2:"+JoinGroupsListExclusive);
 							// if(!he.getEdge().getV1().toString().contains("http") &&
 							// !he.getEdge().getV2().toString().contains("http"))
 							{
+								Integer max;
+									max=0;
+								
+										
 								temp.put(he.getEdge(), be.getStartVertex());
-								StartBindingFinal.put(temp, new ArrayList<>());
+								StartBindingFinal.put(temp, max);
 								// Processed.add(he);
 								ProcessedVertex.add(be.getStartVertex());
 						//		ProcessedVertex.add(be.getEdge().getV1());
@@ -6990,6 +6961,9 @@ System.out.println("THis is Tempf2:"+JoinGroupsListExclusive);
 							}
 					}		
 						}
+						
+						System.out.println("These are inside StartBindingFinal00000000000.2:" + StartBindingFinalKey);
+						
 //						for(Entry<HashMap<Edge, Vertex>, ArrayList<Binding>> sbf:StartBindingFinal.entrySet())
 					//		System.out.println("These are StartBindingFinal00000000000.1:" + sbf);
 
@@ -7003,9 +6977,14 @@ System.out.println("THis is Tempf2:"+JoinGroupsListExclusive);
 								|| be.getStartVertex().getNode().toString().equals(he.getEdge().getV2().getNode().toString())) {
 						//	if(!StartBindingFinalKey.containsKey(he.getEdge()))
 						//	{
+							
+							Integer max;
+							 max=	0;
+							System.out.println("These are inside StartBindingFinal00000000000.3:" + max);
+							
 								temp.put(he.getEdge(), be.getStartVertex());
 						//		if(StartBindingFinal.con)
-								StartBindingFinal.put(temp, new ArrayList<>());
+								StartBindingFinal.put(temp,max);
 								// Processed.add(he);
 								ProcessedVertex.add(be.getStartVertex());
 						//		ProcessedVertex.add(be.getEdge().getV1());
@@ -7018,6 +6997,7 @@ System.out.println("THis is Tempf2:"+JoinGroupsListExclusive);
 					}		
 						//}
 				
+				System.out.println("These are inside StartBindingFinal00000000000.4:" + StartBindingFinalKey);
 				
 				//for(Entry<HashMap<Edge, Vertex>, ArrayList<Binding>> sbf:StartBindingFinal.entrySet())
 				//	System.out.println("These are StartBindingFinal00000000000:" + sbf);
@@ -7030,8 +7010,13 @@ System.out.println("THis is Tempf2:"+JoinGroupsListExclusive);
 					else if(ProcessedVertex.toString().contains(be.getEdge().getV2().getNode().toString()))
 						temp.put(be.getEdge(), be.getEdge().getV2());
 					StartBindingFinalKey.putAll(temp);
-					
-					StartBindingFinal.put(temp, new ArrayList<>());
+					Integer max;
+					//if(StartBindingFinal.isEmpty())
+					//	max=0;
+					//else
+						max=	0;
+				
+					StartBindingFinal.put(temp, max);
 					}
 				/*			for(Entry<HashMap<Edge, Vertex>, ArrayList<Binding>> sbf:StartBindingFinal.entrySet())
 				System.out.println("These are StartBindingFinal11111:" + sbf);
@@ -7087,7 +7072,9 @@ System.out.println("THis is Tempf2:"+JoinGroupsListExclusive);
 							// temp.put(be.getEdge().getV2(), he.getEdge());
 							// System.out.println("These are the determined vertex1111:" + temp);
 							StartBindingFinalKey.putAll(temp);
-							StartBindingFinal.put(temp, new ArrayList<>());
+							Integer max;
+							 max=	0;
+							StartBindingFinal.put(temp, max);
 							ProcessedVertex.add(be.getStartVertex());
 
 						}
@@ -7122,8 +7109,10 @@ System.out.println("THis is Tempf2:"+JoinGroupsListExclusive);
 							// temp.put(be.getEdge().getV2(), he.getEdge());
 							// System.out.println("These are the determined vertex1111:" + temp);
 							StartBindingFinalKey.putAll(temp);
-							StartBindingFinal.put(temp, new ArrayList<>());
-							ProcessedVertex.add(be.getStartVertex());
+							Integer max;
+								max=0;
+							
+							StartBindingFinal.put(temp, max);
 
 						}
 					}
@@ -7168,7 +7157,7 @@ StartBindingFinal.put(temp, new ArrayList<>());
 				StartBindingFinalKey.putAll(temp);
 */				
 				HashMap<Edge, Vertex> Temp3 = new HashMap<>();
-				for (Entry<Multimap<Edge, Vertex>, ArrayList<Binding>> be : StartBindingFinal.entrySet())
+				for (Entry<Multimap<Edge, Vertex>, Integer> be : StartBindingFinal.entrySet())
 					for (Entry<Edge, Vertex> be1 : be.getKey().entries())
 						Temp3.put(be1.getKey(), be1.getValue());
 
@@ -7178,7 +7167,7 @@ StartBindingFinal.put(temp, new ArrayList<>());
 					Temp2.put(t31.getKey(), t31.getValue());
 					StartBindingFinal.put(Temp2, null);
 				}
-				for (Entry<Multimap<Edge, Vertex>, ArrayList<Binding>> sbt : StartBindingFinal.entrySet())
+				for (Entry<Multimap<Edge, Vertex>, Integer> sbt : StartBindingFinal.entrySet())
 					System.out.println("This is obt value StartBindingFinal:" + sbt);
 
 //				for (Entry<ConcurrentHashMap<Vertex, Edge>, ArrayList<Binding>> obt : StartBindingFinal.entrySet())
@@ -7203,7 +7192,7 @@ StartBindingFinal.put(temp, new ArrayList<>());
 		
 		//		StartBindingFinal.remove(removal);
 
-			for(Entry<Multimap<Edge, Vertex>, ArrayList<Binding>> sbf:StartBindingFinal.entrySet())
+			for(Entry<Multimap<Edge, Vertex>, Integer> sbf:StartBindingFinal.entrySet())
 					System.out.println("These are StartBindingFinal:" + sbf);
 				
 				PublicHashVertex.addAll(ProcessedVertex);
@@ -7252,7 +7241,7 @@ StartBindingFinal.put(temp, new ArrayList<>());
 						}
 					//	abc.add("?"+eq1.getKey().substring(eq1.getKey().indexOf("?")).replaceAll("[^A-Za-z]+", ""));
 					
-				for(Entry<Multimap<Edge, Vertex>, ArrayList<Binding>> sbf:StartBindingFinal.entrySet()) {
+				for(Entry<Multimap<Edge, Vertex>, Integer> sbf:StartBindingFinal.entrySet()) {
 					for(Entry<Edge, Vertex> sbf1:sbf.getKey().entries())
 						for(String abc1:abc)
 						if(sbf1.getKey().toString().contains(abc1)) {
@@ -8290,7 +8279,7 @@ if(JoinGroupsListLeftOptional.size()>0)
 
 				// for(List<EdgeOperator> jgl:JoinGroupLists)
 				// System.out.println("These are JoinGroupLists jgl111:"+jgl);
-						for (Entry<Multimap<Edge, Vertex>, ArrayList<Binding>> sbt : StartBindingFinal.entrySet())
+						for (Entry<Multimap<Edge, Vertex>, Integer> sbt : StartBindingFinal.entrySet())
 					System.out.println("This is obt value StartBindingFinal:" + sbt);
 
 //				for (Entry<ConcurrentHashMap<Vertex, Edge>, ArrayList<Binding>> obt : StartBindingFinal.entrySet())
@@ -8315,7 +8304,7 @@ if(JoinGroupsListLeftOptional.size()>0)
 		
 		//		StartBindingFinal.remove(removal);
 
-			for(Entry<Multimap<Edge, Vertex>, ArrayList<Binding>> sbf:StartBindingFinal.entrySet())
+			for(Entry<Multimap<Edge, Vertex>, Integer> sbf:StartBindingFinal.entrySet())
 					System.out.println("These are StartBindingFinal:" + sbf);
 				
 
@@ -8356,7 +8345,7 @@ if(JoinGroupsListLeftOptional.size()>0)
 					System.out.println("This is now billion times:"+eq1.getKey().substring(eq1.getKey().indexOf("?"), eq1.getKey().indexOf(")")));
 					abc.add(eq1.getKey().substring(eq1.getKey().indexOf("?"), eq1.getKey().indexOf(")")));
 					
-				for(Entry<Multimap<Edge, Vertex>, ArrayList<Binding>> sbf:StartBindingFinal.entrySet()) {
+				for(Entry<Multimap<Edge, Vertex>, Integer> sbf:StartBindingFinal.entrySet()) {
 					for(Entry<Edge, Vertex> sbf1:sbf.getKey().entries())
 						for(String abc1:abc)
 						if(sbf1.getKey().toString().contains(abc1)) {
@@ -8451,7 +8440,12 @@ HashEdges.addAll(tt);
 					{
 						 temp =LinkedListMultimap.create();
 						temp.put(he.getEdge(), be.getStartVertex());
-						StartBindingFinal.put(temp, new ArrayList<>());
+						Integer max;
+						if(StartBindingFinal.isEmpty())
+							max=0;
+						else max=	Collections.max(StartBindingFinal.entrySet(), Comparator.comparingInt(Map.Entry::getValue)).getValue();
+				
+						StartBindingFinal.put(temp, max);
 						// Processed.add(he);
 						ProcessedVertex.add(be.getStartVertex());
 				//		ProcessedVertex.add(be.getEdge().getV1());
@@ -8479,8 +8473,14 @@ HashEdges.addAll(tt);
 				//	{
 					
 					{		
+						
+						Integer max;
+						if(StartBindingFinal.isEmpty())
+							max=0;
+						else max=	Collections.max(StartBindingFinal.entrySet(), Comparator.comparingInt(Map.Entry::getValue)).getValue();
+				
 						temp.put(he.getEdge(), be.getStartVertex());
-						StartBindingFinal.put(temp, new ArrayList<>());
+						StartBindingFinal.put(temp, max);
 						// Processed.add(he);
 						ProcessedVertex.add(be.getStartVertex());
 				//		ProcessedVertex.add(be.getEdge().getV1());
@@ -8617,7 +8617,7 @@ HashEdges.addAll(tt);
 				}
 			}
 		}*/
-		for(Entry<Multimap<Edge, Vertex>, ArrayList<Binding>> sbf:StartBindingFinal.entrySet())
+		for(Entry<Multimap<Edge, Vertex>, Integer> sbf:StartBindingFinal.entrySet())
 			System.out.println("These are StartBindingFinal333333:" + sbf);
 		
 /*				for (EdgeOperator he : BindEdges) {// System.out.println("These are the determined
@@ -9012,7 +9012,6 @@ StartBindingFinal.put(temp, new ArrayList<>());
 	public static ArrayList<Binding> GPUJoin(Collection<Binding> left, Collection<Binding> right,
 			Collection<Binding> left2, Collection<Binding> right2, int type,String string) {
 		iteration++;
-		type1 = type;
 		int a = 0;
 
 		ArrayList<String> headersAllLeft = new ArrayList<>();
@@ -10153,6 +10152,8 @@ if(type!=2) {
 		//Vertex ew1Kv3=ew1K.getEdge().getV1();
 		//Vertex ew1Kv4=ew1K.getEdge().getV2();
 		
+		
+		
 	/*	if(BindJoin.inner==1)
 		{
 			System.out.println("This is the last of stories567:"+BindJoin.ciff+"--"+  StageGen.StringConversion(BindJoin.biff.substring(1)));
@@ -10580,56 +10581,85 @@ if(type!=2) {
 		// Binding xz
 		// =l1.next();
 //if(QueryTask.isBound==0) {
-		for (String l : input2) {
-			// System.out.println("This is the original one:"+l);
-			int i = 0;
-			Pattern regex = Pattern.compile("[?=\\)][?= ][?=\\(]");
-			String[] regexMatcher = regex.split(l);
-			// synchronized(regexMatcher) {
-			for (String ml : regexMatcher) {
-				// System.out.println("This is the original one:"+ml);
-
-				String[] mlp = ml.split(" ");
-				// arr.clear();
-				// arr.addAll(Arrays.asList(mlp));
-				String str = "";
-
-				for (int iii = 3; iii <= mlp.length - 1; iii++)
-					// if(!arr.toString().contains("http"))
-				{	//System.out.println("This is subsubsplit:"+mlp[iii]);
-					str += mlp[iii].replace(")", "").replace("(", "").replace("->", "").replace("[Root]", "")
-							.replace("\"", "") + " ";
-				}// else
-				// str+=arr.get(iii).replace(")", "").replace("(", "").replace("->",
-				// "").replace("[Root]", "").replace("\"", "");
-				// System.out.println("This is subsubsplit:"+str);
-				temp999.add(String.valueOf(str));
-
-				// if(QueryTask.isBound==1)
-				// {
-				// for(String m:mlp)
-				/// System.out.println("This is old record:"+m);
-				// for(String t:temp)
-//					System.out.println("This is new record:"+str);
-				// }
-				
-				
-				if (i == size - 1) {
-					rowsLeft.add(temp999);
-					temp999 = new ArrayList<>();
-				}
-
-				i++;
-				
 		
-			}
 
-			// j++;
+		List<Callable<Integer>> tasks = new ArrayList<Callable<Integer>>();
+		//ExecutorService exec = Executors.newWorkStealingPool();
+		Pattern regex = Pattern.compile("[?=\\)][?= ][?=\\(]");
+		
+		for (String l : input2) {
+			
+			//Callable<Integer> c = new Callable<Integer>() {
+			//	@Override
+			//	public Integer call() throws Exception {
 
-			}
+					int i = 0;
+					String[] regexMatcher = regex.split(l);
+					// synchronized(regexMatcher) {
+					for (String ml : regexMatcher) {
+						// System.out.println("This is the original one:"+ml);
+
+						String[] mlp = ml.split(" ");
+						// arr.clear();
+						// arr.addAll(Arrays.asList(mlp));
+						String str = "";
+
+						for (int iii = 3; iii <= mlp.length - 1; iii++)
+							// if(!arr.toString().contains("http"))
+						{	//System.out.println("This is subsubsplit:"+mlp[iii]);
+							str += mlp[iii].replace(")", "").replace("(", "").replace("->", "").replace("[Root]", "")
+									.replace("\"", "") + " ";
+						}// else
+						// str+=arr.get(iii).replace(")", "").replace("(", "").replace("->",
+						// "").replace("[Root]", "").replace("\"", "");
+						// System.out.println("This is subsubsplit:"+str);
+						temp999.add(String.valueOf(str));
+
+						// if(QueryTask.isBound==1)
+						// {
+						// for(String m:mlp)
+						/// System.out.println("This is old record:"+m);
+						// for(String t:temp)
+//							System.out.println("This is new record:"+str);
+						// }
+						
+						
+						if (i == size - 1) {
+							rowsLeft.add(temp999);
+						//	System.out.println("This is new record:"+rowsLeft);
+							
+							temp999 = new ArrayList<>();
+						}
+
+						i++;
+						
+				
+					}
+
+					// j++;
+
+					
+						//	j++;
+		//			return 1;
+				
+			//	}
+		//	};
+		//	tasks.add(c);
+			
+		
+		
+			// System.out.println("This is the original one:"+l);
+}
 
 	
-
+		 /*
+				try {
+					List<Future<Integer>> results = exec.invokeAll(tasks);
+					
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}*/
 		/*
 		 * } else { for(String l:in) {// String zy=
 		 * l1.toString();//.replace("\\", "").replace("',","").replace("'-
@@ -10691,9 +10721,12 @@ if(type!=2) {
 
 				}
 		}
+		type1=0;
 		// if(ParaEng.Union.contains("UNION"))
 		if (headersLeft.size() == 1) {
 			HeaderReplacement.put(headersLeft.get(0).toString(), "?a");
+			type1 = 1;
+			
 			// rowsLeft.get(0).get(0).replace(rowsLeft.get(0).get(0), "?a");
 			rowsLeft.get(0).set(0, "?a");// ).replace(rowsLeft.get(0).get(z),
 											// HeaderReplacement.get(headersLeft.get(z).toString()));
@@ -10739,222 +10772,96 @@ if(type!=2) {
 		// Binding xz
 		// =l1.next();
 //if(QueryTask.isBound==0) {
-		for (String l : input2) {
-			// System.out.println("This is the original one:"+l);
-			int i = 0;
-			Pattern regex = Pattern.compile("[?=\\)][?= ][?=\\(]");
-		//	System.out.println("This is su:"+l);
-			
-			String[] regexMatcher = regex.split(l);
-			// synchronized(regexMatcher) {
-			for (String ml : regexMatcher) {
-				// System.out.println("This is the original one:"+ml);
+		
 
-				String[] mlp = ml.split(" ");
-				// arr.clear();
-				// arr.addAll(Arrays.asList(mlp));
-				String str = "";
-			//	System.out.println("This is subsubsplit9919191919:"+ml);
-				for (int iii = 3; iii <= mlp.length - 1; iii++)
-					// if(!arr.toString().contains("http"))
-				{
-			//		System.out.println("This is subsubsplit:"+mlp[iii]);
+		//List<Callable<Integer>> tasks = new ArrayList<Callable<Integer>>();
+		//ForkJoinPool exec = new ForkJoinPool();
+		Pattern regex = Pattern.compile("[?=\\)][?= ][?=\\(]");
+		
+		//for (String l :
+			input2.stream().forEach(l->{
+				int i = 0;
+				String[] regexMatcher = regex.split(l);
+				// synchronized(regexMatcher) {
+				for (String ml : regexMatcher) {
+					// System.out.println("This is the original one:"+ml);
+
+					String[] mlp = ml.split(" ");
+					// arr.clear();
+					// arr.addAll(Arrays.asList(mlp));
+					String str = "";
 					
-					str += mlp[iii].replace(")", "").replace("(", "").replace("->", "").replace("[Root]", "")
-							.replace("\"", "") + " ";
-				}	// else
-				// str+=arr.get(iii).replace(")", "").replace("(", "").replace("->",
-				// "").replace("[Root]", "").replace("\"", "");
-			// System.out.println("6666655555555This is subsubsplit:"+str);
-		//	if(type==2)	
-			//	System.out.println("This is subsubsplit:"+temp999+"--"+size+"--"+i+"--"+l);
-				temp999.add(String.valueOf(str));
+					for (int iii = 3; iii <= mlp.length - 1; iii++)
+						// if(!arr.toString().contains("http"))
+					{	//System.out.println("This is subsubsplit:"+mlp[iii]);
+						str += mlp[iii].replace(")", "").replace("(", "").replace("->", "").replace("[Root]", "")
+								.replace("\"", "") + " ";
+					}// else
+					// str+=arr.get(iii).replace(")", "").replace("(", "").replace("->",
+					// "").replace("[Root]", "").replace("\"", "");
+					// System.out.println("This is subsubsplit:"+str);
+					temp999.add(String.valueOf(str));
 
-				// if(QueryTask.isBound==1)
-				// {
-				// for(String m:mlp)
-				/// System.out.println("This is old record:"+m);
-				// for(String t:temp)
-//					System.out.println("This is new record:"+str);
-				// }
+					// if(QueryTask.isBound==1)
+					// {
+					// for(String m:mlp)
+					/// System.out.println("This is old record:"+m);
+					// for(String t:temp)
+//						System.out.println("This is new record:"+str);
+					// }
+					
+					
+					if (i == size - 1) {
+						rowsLeft.add(temp999);
+		//				System.out.println("This is new record:"+rowsLeft);
+						
+						temp999 = new ArrayList<>();
+					}
 
-				if (i == size - 1) {
-					rowsLeft.add(temp999);
-					temp999 = new ArrayList<>();
+					i++;
+					
+			
 				}
 
-				i++;
-			}
+				// j++;
 
-			// j++;
+				
+					//	j++;
+			//	return 1;
+			
+			
 
-		}
-		/*
-		 * } else { for(String l:in) {// String zy=
-		 * l1.toString();//.replace("\\", "").replace("',","").replace("'-
-		 * ","").replace(",","").replace("\'", "").replace("\\\"","").replace(
-		 * "^^xsd:int", "^^xsd:int\"").replace("^^xsd:date",
-		 * "^^xsd:date\"").replace("@en", "@en\"").replace("@de", "@de\"").replace("_:",
-		 * "\"_:").replace("^^xsd:float", "^^xsd:float\"").replace("^^xsd:double",
-		 * "^^xsd:double\"").replace("NAN", "0");
-		 * //System.out.println("This is the original one:"+l1.size()+"--"+zy); int i=0;
-		 * Pattern regex = Pattern.compile("[?=\\)][?= ][?=\\(]"); String[] regexMatcher
-		 * = regex.split(l); //synchronized(regexMatcher) { for(String ml:regexMatcher)
-		 * { String[] mlp= ml.split(" "); // arr.clear(); //
-		 * arr.addAll(Arrays.asList(mlp)); String str="";
-		 * 
-		 * for(int iii=3;iii<=mlp.length-1;iii++) //if(!arr.toString().contains("http"))
-		 * str+=mlp[iii].replace(")", "").replace("(", "").replace("->",
-		 * "").replace("[Root]", "").replace("\"", "")+" "; //else //
-		 * str+=arr.get(iii).replace(")", "").replace("(", "").replace("->",
-		 * "").replace("[Root]", "").replace("\"", ""); //
-		 * System.out.println("This is subsubsplit:"+str); temp.add(str);
-		 * 
-		 * // if(QueryTask.isBound==1) // { // for(String m:mlp) ///
-		 * System.out.println("This is old record:"+m); // for(String t:temp) //
-		 * System.out.println("This is new record:"+str); // }
-		 * 
-		 * if(i==size-1) { rowsLeft.add(temp); temp = new ArrayList<>(); }
-		 * 
-		 * 
-		 * i++; }
-		 * 
-		 * 
-		 * j++;
-		 * 
-		 * } }
-		 */
-		System.out.println("This is time1.2:" + LocalTime.now());
-		if(type!=0)
-		{
-		if (headersLeft.size() > 1) {
-			if (HeaderReplacement != null || HeaderReplacement.size() > 0)
-				for (int z = 0; z < headersLeft.size(); z++) {
-					if (HeaderReplacement.containsKey(headersLeft.get(z).toString()))
-						rowsLeft.get(0).set(z, HeaderReplacement.get(headersLeft.get(z).toString()));// ).replace(rowsLeft.get(0).get(z),
-																										// HeaderReplacement.get(headersLeft.get(z).toString()));
-					else
-						rowsLeft.get(0).set(z, headersLeft.get(z));// ).replace(rowsLeft.get(0).get(z),
-																	// HeaderReplacement.get(headersLeft.get(z).toString()));
+			});//) {
+			
+//			Callable<Integer> c = new Callable<Integer>() {
+//				@Override
+//				public Integer call() throws Exception {
 
-					// rowsLeft.get(0).get(z).replace(rowsLeft.get(0).get(z), headersLeft.get(z));
-
-					// table[0][z]=headersLeft.get(z);
-
-				}
-			else
-				for (int z = 0; z < headersLeft.size(); z++) {// table[0][z]=headersLeft.get(z);
-																// rowsLeft.get(0).get(z).replace(rowsLeft.get(0).get(z),
-																// headersLeft.get(z));
-					rowsLeft.get(0).set(z, headersLeft.get(z));// ).replace(rowsLeft.get(0).get(z),
-																// HeaderReplacement.get(headersLeft.get(z).toString()));
-
-				}
-		}
-		// if(ParaEng.Union.contains("UNION"))
-		if (headersLeft.size() == 1) {
-			HeaderReplacement.put(headersLeft.get(0).toString(), headersLeft.get(0).toString()+"?a");
-			// rowsLeft.get(0).get(0).replace(rowsLeft.get(0).get(0), "?a");
-			rowsLeft.get(0).set(0, headersLeft.get(0).toString()+"?a");// ).replace(rowsLeft.get(0).get(z),
-											// HeaderReplacement.get(headersLeft.get(z).toString()));
-
-//		table[0][0]="?a";
-
-		}
+				//		};
+	//		tasks.add(c);
+			
 		
-		for(Entry<String, String> hr:HeaderReplacement.entrySet())
-			System.out.println("This is arraylist9.7:" + hr.getKey() + "--" + hr.getValue());
-
-			for (int z = 0; z < headersLeft.size(); z++) {// table[z][0]=headersLeft.get(z);
-			System.out.println("This is arraylist9.7:" + z + "--" + rowsLeft.get(0).get(z));
-
-		}
-	}
-//	for(List<String> r:rowsLeft) {
-//	for(String l:r) {
-//		System.out.print(" "+l);
-//	}
-//	System.out.println();
-//}	
-		long count=0;
 		
-		//if(rowsLeft.size()==1)
-	//	{
-	//		rowsLeft.clear();
-	//		rowsLeft.add(as.parallelStream().collect(Collectors.toList()));
-	//	}
-		return rowsLeft;
-	}
+			// System.out.println("This is the original one:"+l);
+//}
 
 	
-	public static List<List<String>> transformResultList(List<String> input2, List<String> in, List<String> headersLeft) {
-
-		List<List<String>> rowsLeft = new ArrayList<>();
-
-		System.out.println("This is time1.1:" + LocalTime.now());
-
-		temp999 = new ArrayList<>();
-		rowsLeft.add(headersLeft);
-		int size = headersLeft.size();
-		// ArrayList<String> arr = new ArrayList<>();
-//int j=0;
-		// while(l1.hasNext()) {
-//		if(QueryTask.isBound==1)
-//		{
-//		  try {
-		// l1.wait(500);
-		// } catch (InterruptedException e) {
-		// TODO Auto-generated catch block
-		// e.printStackTrace();
-		// }
-		// }
-		// Binding xz
-		// =l1.next();
-//if(QueryTask.isBound==0) {
-		for (String l : input2) {
-			// System.out.println("This is the original one:"+l);
-			int i = 0;
-			Pattern regex = Pattern.compile("[?=\\)][?= ][?=\\(]");
-			String[] regexMatcher = regex.split(l);
-			// synchronized(regexMatcher) {
-			for (String ml : regexMatcher) {
-				// System.out.println("This is the original one:"+ml);
-
-				String[] mlp = ml.split(" ");
-				// arr.clear();
-				// arr.addAll(Arrays.asList(mlp));
-				String str = "";
-
-				for (int iii = 3; iii <= mlp.length - 1; iii++)
-					// if(!arr.toString().contains("http"))
-					str += mlp[iii].replace(")", "").replace("(", "").replace("->", "").replace("[Root]", "")
-							.replace("\"", "") + " ";
-				// else
-				// str+=arr.get(iii).replace(")", "").replace("(", "").replace("->",
-				// "").replace("[Root]", "").replace("\"", "");
-				// System.out.println("This is subsubsplit:"+str);
-				temp999.add(String.valueOf(str));
-
-				// if(QueryTask.isBound==1)
-				// {
-				// for(String m:mlp)
-				/// System.out.println("This is old record:"+m);
-				// for(String t:temp)
-//					System.out.println("This is new record:"+str);
-				// }
-
-				if (i == size - 1) {
-					rowsLeft.add(temp999);
-					temp999 = new ArrayList<>();
+		 
+	/*			try {
+					List<Future<Integer>> results = exec.invokeAll(tasks);
+					for(Future<Integer> r:results)
+						try {
+							r.get();
+						} catch (ExecutionException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
-
-				i++;
-			}
-
-			// j++;
-
-		}
-		/*
+				exec.shutdown();
+	*/	/*
 		 * } else { for(String l:in) {// String zy=
 		 * l1.toString();//.replace("\\", "").replace("',","").replace("'-
 		 * ","").replace(",","").replace("\'", "").replace("\\\"","").replace(
@@ -11015,9 +10922,12 @@ if(type!=2) {
 
 				}
 		}
+		type1=0;
 		// if(ParaEng.Union.contains("UNION"))
 		if (headersLeft.size() == 1) {
 			HeaderReplacement.put(headersLeft.get(0).toString(), "?a");
+			type1 = 1;
+			
 			// rowsLeft.get(0).get(0).replace(rowsLeft.get(0).get(0), "?a");
 			rowsLeft.get(0).set(0, "?a");// ).replace(rowsLeft.get(0).get(z),
 											// HeaderReplacement.get(headersLeft.get(z).toString()));
@@ -11026,12 +10936,12 @@ if(type!=2) {
 
 		}
 		for (int z = 0; z < headersLeft.size(); z++) {// table[z][0]=headersLeft.get(z);
-			System.out.println("This is arraylist:" + z + "--" + rowsLeft.get(0).get(z));
+//			System.out.println("This is arraylist9.5:" + z + "--" + rowsLeft.get(0).get(z));
 
 		}
 
 //	for(List<String> r:rowsLeft) {
-//	for(String l:r) {
+//for(String l:r) {
 //		System.out.print(" "+l);
 //	}
 //	System.out.println();
@@ -13785,20 +13695,26 @@ for(EdgeOperator jgl:operators_BushyTreeLeftOptional)
 			List<List<String>> rightTable, int type, int isLarge) {
 		System.out.println("This is here 11111:");
 		System.out.println("This is here 3333333333000000000000:" + leftTable.size() + "--" + rightTable.size());
-ForkJoinPool fjp = new ForkJoinPool();
+
+		ForkJoinPool fjp = new ForkJoinPool();
 fjp.submit(()->
 		{	ArrayList<String[]> leftCsv = new ArrayList<String[]>();
 		for (int i = 0; i < leftTable.size(); i++) {
 			String[] temp = new String[leftTable.get(0).size()];
 			for (int n = 0; n < temp.length; n++) {
-				if(i==0 && leftTable.get(0).size()>1 )  {
-				if (HeaderReplacement.containsKey(leftTable.get(0).get(n).toString()))
-				{		System.out.println("This is the problem of problems:"+HeaderReplacement+"--"+leftTable.get(0).get(n)+"--"+HeaderReplacement.get(leftTable.get(0).get(n)));
-					temp[n] = HeaderReplacement.get(leftTable.get(0).get(n));
-					//temp[n].set(n, HeaderReplacement.get(leftTable.get(n).toString()));// ).replace(rowsLeft.get(0).get(z),
 			
+
+				if(i==0 && leftTable.get(0).size()>1 )  {
+						
+				if (HeaderReplacement.containsKey(leftTable.get(0).get(n).toString()))
+				{			temp[n] = HeaderReplacement.get(leftTable.get(0).get(n));
+					//temp[n].set(n, HeaderReplacement.get(leftTable.get(n).toString()));// ).replace(rowsLeft.get(0).get(z),
+				//System.out.println("0This is here 3333333333111111111111111111:" + temp[n] );
 				}else
+				{
 					temp[n] = leftTable.get(i).get(n);
+				//	System.out.println("1This is here 3333333333111111111111111111:" + temp[n] );	
+				}
 			// HeaderReplacement.get(headersLeft.get(z).toString()));
 			// ).replace(rowsLeft.get(0).get(z),
 																// HeaderReplacement.get(headersLeft.get(z).toString()));
@@ -13807,26 +13723,33 @@ fjp.submit(()->
 
 				// table[0][z]=headersLeft.get(z);
 				}
-				else
+				else {
 				temp[n] = leftTable.get(i).get(n);
+				//System.out.println("2This is here 3333333333111111111111111111:" +temp[n] );
+				}
 			}
 
 			leftCsv.add(temp);
 		}
-
+//System.out.println("THis is the method to madness111111");;
 		List<String[]> rightCsv = new ArrayList<String[]>();
 		for (int i = 0; i < rightTable.size(); i++) {
 			String[] temp = new String[rightTable.get(0).size()];
 			for (int n = 0; n < temp.length; n++) {
+			
 				if(i==0 && rightTable.get(0).size()>1 ) {
 					if (HeaderReplacement.containsKey(rightTable.get(0).get(n).toString()))
 					{		System.out.println("This is the problem of problems:"+HeaderReplacement+"--"+rightTable.get(0).get(n)+"--"+HeaderReplacement.get(leftTable.get(0).get(n)));
 						temp[n] = HeaderReplacement.get(rightTable.get(0).get(n));
 						//temp[n].set(n, HeaderReplacement.get(leftTable.get(n).toString()));// ).replace(rowsLeft.get(0).get(z),
-				
+//						System.out.println("0This is here 33333333332222222222222:" + temp[n] );
+
 					}	
-				else
-					temp[n] = rightTable.get(0).get(n);}
+				else {
+					temp[n] = rightTable.get(0).get(n);
+				//	System.out.println("1This is here 33333333332222222222222:" + temp[n] );
+	
+				}}
 			// HeaderReplacement.get(headersLeft.get(z).toString()));
 			// ).replace(rowsLeft.get(0).get(z),
 																// HeaderReplacement.get(headersLeft.get(z).toString()));
@@ -13835,12 +13758,18 @@ fjp.submit(()->
 
 				// table[0][z]=headersLeft.get(z);
 
-				else
+				else {
 					temp[n] = rightTable.get(i).get(n);
+	//				System.out.println("1This is here 33333333332222222222222:" + temp[n] );
+	
+				}
 			}
 
 			rightCsv.add(temp);
+	//		System.out.println("THis is the method to madness22222222222222222");;
+
 		}
+		System.out.println("THis is the method to madness22222222222222222");;
 		String left=null,right=null;
 	
 		File file = new File("/mnt/hdd/hammad/hammad/leftTable.csv");
@@ -13873,6 +13802,7 @@ fjp.submit(()->
 		System.out.println("This is here 3333333333:" + leftCsv.size()+"--"+rightCsv.size());
 	}).join();
 fjp.shutdown();
+System.out.println("This is here 1100110110011003:");
 /*
 		if((leftCount>1 && rightCount==1 && right.equals("?a")) )
 		{
@@ -14121,7 +14051,7 @@ fjp.shutdown();
 				if(notPossible==1) {
 				if (Exec.getEdge().getV1().equals(t.getKey().getStartVertex())
 						|| Exec.getEdge().getV2().equals(t.getKey().getStartVertex())) {
-					for (Entry<Multimap<Edge, Vertex>, ArrayList<Binding>> gst : StartBindingFinal
+					for (Entry<Multimap<Edge, Vertex>, Integer> gst : StartBindingFinal
 							.entrySet())
 						for (Entry<Edge, Vertex> gst1 : gst.getKey().entries())
 							if (Exec.getEdge().equals(gst1.getKey())) {
@@ -14145,7 +14075,7 @@ fjp.shutdown();
 			//for (EdgeOperator jggl1 : jggl) {
 			else {if (futureEdgeOperator.getEdge().getV1().equals(t.getKey().getStartVertex())
 						|| futureEdgeOperator.getEdge().getV2().equals(t.getKey().getStartVertex())) {
-					for (Entry<Multimap<Edge, Vertex>, ArrayList<Binding>> gst : StartBindingFinal
+					for (Entry<Multimap<Edge, Vertex>, Integer> gst : StartBindingFinal
 							.entrySet())
 						for (Entry<Edge, Vertex> gst1 : gst.getKey().entries())
 							if (futureEdgeOperator.getEdge().equals(gst1.getKey())) {
@@ -14194,4 +14124,238 @@ fjp.shutdown();
 	for (Entry<EdgeOperator, List<Binding>> et : TempBind.entrySet())
 		TempDone.add(et.getKey());
 }
+
+List<Binding> innerFilterProcess() {
+	if ( ParaEng.InnerFilter!=null) {
+		
+		for(List<Binding> e1:HashJoin.NotJoinedTriples.values()) {
+			List<Var> joinVarsList1 = new ArrayList<>();
+			Var joinVars1 = null;
+		Iterator<Binding> rIterator1 = e1.iterator();
+		List<Binding> temp11 = new ArrayList<>();
+		int br1 = 0;
+
+
+		Iterator<Var> l111=null;
+		//Set<Vertex> v1 = new HashSet<>();
+//		Multimap<Vertex,String> v1 = ArrayListMultimap.create();
+		while(rIterator1.hasNext()) 
+			l111 = rIterator1.next().vars();
+		String f = null;
+//			for(Binding r:results)
+		int keyOrvalue=0;	
+		
+		if(l111!=null)
+			while (l111.hasNext()) {
+				
+				Var v3 = l111.next();
+				
+			//	System.out.println("This is rule no.3 in StartBinding123Large: BGPEval" + v3);
+							
+						for(Entry<HashMap<String, List<Binding>>, HashMap<String, List<Binding>>> iff:ParaEng.InnerFilter.entrySet())
+	{	for(Entry<String, List<Binding>> iff1:iff.getKey().entrySet())
+		{		Var r = Var.alloc(iff1.getKey().substring(1));
+			//	System.out.println("This is rule no.3 in StartBinding123Larsge:" + r + "--" + v3);
+				joinVarsList1.add(v3);
+				if (r.equals(v3)) {
+				//	joinVarsList.add(v3);
+					keyOrvalue=1;
+					f=iff1.getKey();
+					joinVars1 = v3;
+					br1 = 1;
+			//		break;
+				}
+
+			}
+	if(joinVars1==null) {
+		for(Entry<String, List<Binding>> iff1:iff.getValue().entrySet())
+		{		Var r = Var.alloc(iff1.getKey().substring(1));
+				//System.out.println("This is rule no.3 in StartBinding123Large:" + r + "--" + v3);
+				joinVarsList1.add(v3);
+				if (r.equals(v3)) {
+					//joinVarsList.add(v3);
+					keyOrvalue=2;
+					f=iff1.getKey();
+					joinVars1 = v3;
+					br1 = 1;
+			//		break;
+				}
+
+			}
+	}
+	}
+			//if (br == 1) {
+			//	br = 0;
+			//	break;
+			//}
+			}
+//		System.out.println("This is timing within postprocess3:"+LocalTime.now());
+
+		if (joinVars1 != null) {
+//				for(Var jvl:joinVarsList1)
+			
+			for (Binding e11 : e1) {
+				BindingHashMap extend = new BindingHashMap();// TODO do not use a new binding map
+				
+			//	System.out.println("These are the problems:"+e1.toString().replace("<", "").replace(">", "").replace("\"", ""));
+				//List<Binding> t_temp=new ArrayList<>();
+				for(Var jvl:joinVarsList1)
+				{	
+				//	System.out.println("This is rule no. 2 in BindJoin123123123123:" + jvl+"--"+e11.get(jvl));
+												
+				if (e11.get(jvl) != null) {
+					if (e11.get(jvl).toString().contains("http"))
+						extend.addAll(BindingFactory.binding(jvl, StageGen.StringConversion(e11.get(jvl)
+								.toString().replace("<", "").replace(">", "").replace("\"", "").replace(" ", ""))));
+					else
+						extend.addAll(BindingFactory.binding(jvl, StageGen.StringConversion(
+								e11.get(jvl).toString().replace("<", "").replace(">", "").trim())));
+				//	System.out.println("This is rule no. 2 in BindJoin00000111111:" + extend);	
+				}
+				
+				}
+				temp11.add(extend);
+				
+			}
+		
+		Iterator<Entry<HashMap<String, List<Binding>>, HashMap<String, List<Binding>>>> ifiterator = ParaEng.InnerFilter.entrySet().iterator();
+		while(ifiterator.hasNext()) {
+		Entry<HashMap<String, List<Binding>>, HashMap<String, List<Binding>>> ifnext = ifiterator.next();
+		if(keyOrvalue==1)
+		ifnext.getKey().replace(f, temp11);
+		if(keyOrvalue==2)
+			
+		ifnext.getValue().replace(f, temp11);
+		}	
+		}
+		
+		
+		
+		}
+
+
+
+	Set<String> ab= new HashSet<>(); 
+
+
+		for(	Entry<HashMap<String, List<Binding>>, HashMap<String, List<Binding>>> eh: ParaEng.InnerFilter.entrySet())
+		{
+			resultsRight =
+					new ArrayList<Binding>();
+			resultsLeft =
+					new ArrayList<Binding>();
+		for(Entry<String, List<Binding>> ee:eh.getValue().entrySet()) {
+			axx=0;
+		Var r = Var.alloc(ee.getKey().substring(1));
+		
+		
+			for(Entry<String, List<Binding>> ee1:eh.getKey().entrySet()) {
+				bt=ee1.getKey();
+				resultsLeft.addAll(ee1.getValue());
+				break;
+			}
+		ee.getValue().stream().forEach(e11->{
+			BindingHashMap extend = new BindingHashMap();
+			String baaa="";
+			if(e11.get(r).toString().contains("@"))
+				 baaa=e11.get(r).toString().substring(0,e11.get(r).toString().indexOf("@"));
+				else
+					baaa=e11.get(r).toString();
+			//System.out.println("This is now the last war fighting:000000000"+e11);
+
+			
+			
+			if (baaa.toString().contains("http"))
+				extend.addAll(BindingFactory.binding(Var.alloc(bt.toString().substring(1)), StageGen.StringConversion(baaa.toString().replace("<", "").replace(">", "").replace("\"", "").replace(" ", ""))));
+			else
+				extend.addAll(BindingFactory.binding(Var.alloc(bt.toString().substring(1)), StageGen.StringConversion(
+						baaa.toString())));
+
+		//	extend.addAll(BindingFactory.binding( Var.alloc(bt.toString().substring(1)),StageGen.StringConversion(baaa.substring(0,baaa.length()-1).replace("null", "").replace(")", "")+"\"")));
+			extend.addAll(e11);
+			System.out.println("This is now the last war fighting:"+e11+"--"+baaa+"--"+bt);
+			System.out.println("123This is now the last war fighting:"+extend);
+			
+			resultsRight.add(extend);
+			
+		
+		});		
+			}
+		leftTable = new ArrayList<>();
+		// TODO do not use a new binding map
+//			for(Binding rb:resultsRight)	
+//		System.out.println("This is timing within postprocess454545454545 BGPEval value:"+rb);
+		
+			leftTable=	StatementGroupOptimizer2.BindingtoTable(resultsLeft.iterator());
+			ArrayList<String[]> leftCsv = new ArrayList<String[]>();
+		for (int i1 = 0; i1 < leftTable.size(); i1++) {
+			String[] temp = new String[leftTable.get(0).size()];
+			for (int n = 0; n < temp.length; n++) {
+				temp[n] = leftTable.get(i1).get(n);
+			}
+			
+			leftCsv.add(temp);
+		}
+		
+		File file1 = new File("/mnt/hdd/hammad/hammad/leftTable.csv");
+
+		if (file1.delete()) {
+			System.out.println("File deleted successfully1");
+		}
+		// System.out.print("These are left var4");
+		try (CSVWriter writer = new CSVWriter(new FileWriter("/mnt/hdd/hammad/hammad/leftTable.csv", true))) {
+			writer.writeAll(leftCsv);
+			// writer.close();
+		} catch (IOException e4) {
+			// TODO Auto-generated catch block
+			e4.printStackTrace();
+		}
+		
+		rightTable = new ArrayList<>();
+		// TODO do not use a new binding map
+		//	for(Binding rb:resultsRight)	
+		//System.out.println("This is timing within postprocess454545454545 BGPEval value:"+rb);
+		
+			rightTable=	StatementGroupOptimizer2.BindingtoTable(resultsRight.iterator());
+			ArrayList<String[]> rightCsv = new ArrayList<String[]>();
+		for (int i1 = 0; i1 <rightTable.size(); i1++) {
+			String[] temp = new String[rightTable.get(0).size()];
+			for (int n = 0; n < temp.length; n++) {
+				temp[n] = rightTable.get(i1).get(n);
+			}
+			
+			rightCsv.add(temp);
+		}
+		
+		 file1 = new File("/mnt/hdd/hammad/hammad/rightTable.csv");
+
+		if (file1.delete()) {
+			System.out.println("File deleted successfully1");
+		}
+		// System.out.print("These are left var4");
+		try (CSVWriter writer = new CSVWriter(new FileWriter("/mnt/hdd/hammad/hammad/rightTable.csv", true))) {
+			writer.writeAll(rightCsv);
+			// writer.close();
+		} catch (IOException e4) {
+			// TODO Auto-generated catch block
+			e4.printStackTrace();
+		}
+	pythonCall(0,0);
+		}
+		
+	}
+fin = new ArrayList<>();
+	org.apache.jena.query.ResultSet v = ResultSetFactory.load("/mnt/hdd/hammad/hammad/output.csv");
+
+	HashMap<String,ResultSet> results1 = new HashMap<>();
+	ForkJoinPool fjp1 =new ForkJoinPool();
+	fjp1.submit(()->{
+	results1.put("a",v);
+for(Entry<String, ResultSet> r2:results1.entrySet())
+	fin = BGPEval.postProcess(r2,1,null);
+	}).join();
+	fjp1.shutdown();
+return fin;
+}
+
 }
