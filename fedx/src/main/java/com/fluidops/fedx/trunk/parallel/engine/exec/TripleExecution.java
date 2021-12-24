@@ -233,6 +233,8 @@ static List<String> v = new ArrayList<>();
 						
 							
 							BGPEval.bindEstimator.addAll(additives);
+							System.out.println("This is bindestimator:"+BGPEval.bindEstimator);
+							
 							if(ParaEng.Distinct=="Yes")
 								ab="SELECT DISTINCT ";
 								else
@@ -241,11 +243,14 @@ static List<String> v = new ArrayList<>();
 								if(be.startsWith("?"))
 									ab=ab+" "+be;
 							}
-							
+							System.out.println("This is bindestimator123345567:"+ab);
+								
 							size=0;
 						ForkJoinPool ex = new ForkJoinPool();
 						try {
 							ex.submit(() -> {
+								System.out.println("Total time elapsed in starting:"+LocalTime.now());
+								
 							System.out.println("This is in performance for:"+this+"--"+endpoints+"--"+string);
 								current1 = new QueryTask(this, endpoints,string);
 								
