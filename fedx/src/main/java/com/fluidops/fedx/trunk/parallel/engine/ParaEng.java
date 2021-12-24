@@ -85,6 +85,8 @@ public static HashMap<String,String> pConstant= new HashMap<>();
 public static HashSet<String> FilterArray=new HashSet<>();
 public static Map<HashMap<String,String>,String> Filtereq= new HashMap<>();
 public static Map<HashMap<String,String>,String> FiltereqLarge= new HashMap<>();
+public static  String curQuery=null;
+
 public ParaEng(Query query, DatasetGraph dataset, Binding input, Context context) {
 		super(query, dataset, input, context);
 	}
@@ -157,7 +159,7 @@ return qIter;
 	       List<String> list = new ArrayList<String>();
 	       List<String> record = new ArrayList<String>();
 
-	       
+	       /*
 	            try (CSVReader csvReader = new CSVReader(new FileReader("/mnt/hdd/hammad/hammad/Query.csv"))) {
 	                String[] values = null;
 	                try {
@@ -180,23 +182,22 @@ return qIter;
 	    		} catch (IOException e1) {
 	    			// TODO Auto-generated catch block
 	    			e1.printStackTrace();
-	    		}
+	    		}*/
 				System.out.println("This is the list22:"+record);
 
 	            String fileName=record.toString().replace("[", "").replace("]","").replace("$", "?");
 				System.out.println("This is the list33:"+fileName);
 
-	            String query="/mnt/hdd/hammad/hammad/query/"+fileName;;
+	            String query="/mnt/hdd/hammad/hammad/QueryFile.csv";
 	            System.out.println("This is query in ParaEng:"+query);
 //	             BufferedReader br = new BufferedReader(new FileReader(query));
 	//             System.out.println("This is really good now:"+br); 
 
 
-	            String curQuery=null;
-
+	            
 	            int j=-1;
 	            String ccc="";
-            
+            /*
 	             try (Scanner s = new Scanner(new FileReader(query))) {
 	            	    while (s.hasNext()) {
 	            	        list.add(s.nextLine());
@@ -204,92 +205,21 @@ return qIter;
 	            	} catch (FileNotFoundException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
-					}
+					}*/
 	//System.out.println("This is the file that is read:"+Arrays.toString(list.toArray()));     
-int i=-1;
- j=-1;
-ccc="";
+//int i=-1;
+// j=-1;
+//ccc="";
 
-try (BufferedReader br = new BufferedReader(new FileReader(query))) {
-	     		    String line;
-	     			String firstEle="";
-    			
-	     		    while ((line = br.readLine()) != null) {
-	     				//curQuery=curQuery.concat(limit);
-	    			 	System.out.println("This is the file that is read:"+line);     
-	    			
-	    			 	line=line.replaceAll("\\s+", " ");
-	    				//for(String c:line.substring(line.indexOf("SELECT")).split("\n")) {
-	    				String[]	cc=line.split("\\s+");
-							int ll=cc.length;
-						if(cc.length==3  && cc[cc.length-1].contains(";") && !line.contains("}") && !line.contains("{"))
-								firstEle=cc[0];
-							if(cc.length==3 && (line.contains(";")|| line.contains(".")) ) {
-								ccc+=line.replace(";", ".").replaceAll("\\s+", " ").replaceAll("\\s+$","");
-								if(ccc.charAt(ccc.length()-1)=='.')
-								ccc=ccc.substring(0,ccc.length()-1)+" . \n";
-								else 
-									ccc+="\n";
-							}
-							else if(cc.length==2 && (line.contains(";")|| line.contains("."))) {
-								ccc+=firstEle+" "+line.replace(";", " .").replaceAll("\\s+", " ").replaceAll("\\s+$","");
-							if(ccc.charAt(ccc.length()-1)=='.')
-								ccc=ccc.substring(0,ccc.length()-1)+" . \n";
-							else 
-								ccc+="\n";
-							}//else if(!c.contains("http"))
-							//	ccc+=c.replaceAll("\\s+", " ").replace("."," .");
-							
-								else if(line.contains("?") || line.contains(".") ) {
-								ccc+=line.replaceAll("\\s+$","");
-								if(ccc.charAt(ccc.length()-1)=='.')
-								ccc=ccc.substring(0,ccc.length()-1)+" . \n";
-								else 
-									ccc+="\n";
-								}
-								else
-									ccc+=line+"\n";
-							
-	     		    }
-	    			 	
-	    			 	/*	String[]	cc=line.split(" ");
-	    						
-	    					if(cc.length==3  && cc[cc.length-1].contains(";") && !line.contains("}") && !line.contains("{"))
-	    							firstEle=cc[0];
-	    						if(cc.length==3 && (line.contains(";")|| line.contains(".")) && !line.contains("http") )
-	    							ccc+=line.concat("\n").replace("."," .").replace(";", ".").replaceAll("\\s+", " ");
-	    						else if(cc.length==2 && (line.contains(";")|| line.contains(".")) && !line.contains("http"))
-	    							ccc+=firstEle+" "+line.replace("."," .").concat("\n").replace(";", " .").replaceAll("\\s+", " ");
-	    						//else if(!c.contains("http"))
-	    						//	ccc+=c.replaceAll("\\s+", " ").replace("."," .");
-	    						
-	    							else
-	    							ccc+=line.replace("."," . \n").replaceAll("\\s+", " ");
-	    						//ccc+=;
-	    						System.out.println("This is currentQue123213123123:"+ccc);
-	    	    				*/
-	    				//	}
-	    				//line=line.substring(0,line.indexOf("SELECT")-1).concat(ccc);
-						
-							
-	     		    //	if(ccc.toString().contains("OPTIONAL") )
-	     		   curQuery=ccc;
-}	     		    		
 
-	     		 catch (FileNotFoundException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-j=-1;
-ccc=curQuery;
 //for(String cc:curQuery.split("\n"))
-	for(String cc:curQuery.split("\n"))
+/*try (BufferedReader br = new BufferedReader(new FileReader(query))) {
+	    String line;
+	    while ((line = br.readLine()) != null) {
+for(String cc:curQuery.split("\n"))
 	{
 		
-	if(cc.contains("OPTIONAL"))
+	if(line.contains("OPTIONAL"))
 	{
 		j++;
 
@@ -299,32 +229,89 @@ if(j>=0) {
 //	System.out.println("111111111This is size of currentQuerrrrrrrrrr:"+j);
 	System.out.println("This is currentQuerrrrrrrrrr:"+cc);
 
-	 if(!cc.contains("{") && !cc.contains("}") && !cc.contains("OPTIONAL")   
+	 if(!line.contains("{") && !line.contains("}") && !line.contains("OPTIONAL")   
 			  )
-		 if( cc.contains(".")) {
-		Optional = Optional+cc.replace("$", "?");
-		  OptionalOrder.put(cc.replace("$", "?"),j);
+		 if( line.contains(".")) {
+		Optional = Optional+line.concat("\n").replace("$", "?");
+		  OptionalOrder.put(line.concat("\n").replace("$", "?"),j);
 	
 		 }
 			System.out.println("This is the complete array:"+cc);
 	 
 	  }
 
-if(cc.toString().contains("UNION"))
-	Union = cc.substring(cc.indexOf("UNION")).replace("$", "?");
-if(cc.contains("UNION"))
+if(line.toString().contains("UNION"))
+	Union = line.substring(line.indexOf("UNION")).replace("$", "?");
+if(line.contains("UNION"))
 i++;
 if(i>=0)
-if(!cc.contains("{") && !cc.contains("}") && !cc.contains("UNION") )
+if(!line.contains("{") && !line.contains("}") && !line.contains("UNION") )
 {
 	
-	  UnionOrder.put(cc.replace("$", "?"),i);
+	  UnionOrder.put(line.replace("$", "?"),i);
 
 }
 
 
 }
-	             
+	    }
+	} catch (FileNotFoundException e) {
+	// TODO Auto-generated catch block
+	e.printStackTrace();
+} catch (IOException e) {
+	// TODO Auto-generated catch block
+	e.printStackTrace();
+}*/
+
+try (Scanner s = new Scanner(new FileReader(query))) {
+    while (s.hasNext()) {
+        list.add(s.nextLine());
+    }
+} catch (FileNotFoundException e) {
+	// TODO Auto-generated catch block
+	e.printStackTrace();
+}
+//System.out.println("This is the file that is read:"+Arrays.toString(list.toArray()));     
+int i=-1;
+int j1=-1;
+try (BufferedReader br = new BufferedReader(new FileReader(query))) {
+ String line;
+ while ((line = br.readLine()) != null) {
+  
+	 System.out.println("This is the file that is read:"+line);     
+	 	
+ 	//if(Arrays.toString(list.toArray()).toString().contains("OPTIONAL"))
+ 	//	Optional = Arrays.toString(list.toArray()).substring(Arrays.toString(list.toArray()).indexOf("OPTIONAL")).replace("$", "?");
+ 	if(line.contains("OPTIONAL"))
+ 	   j1++;
+  if(j1>=0)
+ 	  if(!line.contains("{") && !line.contains("}") && !line.contains("OPTIONAL") )
+ 	  {
+ 	 if( line.contains(".")) {
+ 		Optional = Optional+line.concat("\n").replace("$", "?");
+ 		  OptionalOrder.put(line.concat("\n").replace("$", "?"),j1);
+ 	 }
+ 	  }
+  
+ //if(line.contains("UNION"))
+		
+	if(line.contains("UNION"))
+	   i++;
+if(i>=0)
+	  if(!line.contains("{") && !line.contains("}") && !line.contains("UNION") && line.contains("."))
+	  {UnionOrder.put(line.replace("$", "?"),i);
+	  Union =Union+line.substring(line.indexOf("UNION")).replace("$", "?");
+	  }
+ 
+
+ }
+} catch (FileNotFoundException e) {
+// TODO Auto-generated catch block
+e.printStackTrace();
+} catch (IOException e) {
+// TODO Auto-generated catch block
+e.printStackTrace();
+}
 	             
 	             UnionOrder.remove(" ");
 	             UnionOrder.remove("");
@@ -496,7 +483,7 @@ if(l.toString().contains("MINUS"))
 	             System.out.println("This is now the optional order:"+OptionalOrder+"--"+i);
 	             System.out.println("This is now the final line:"+Union);
 	             
-	             System.out.println("This is now the line with index:"+UnionOrder+"--"+j);
+	             System.out.println("This is now the line with index:"+UnionOrder+"--"+j1);
 
 	             
 if(!Select.contains("*"))
@@ -514,7 +501,20 @@ if(!Select.contains("*"))
 
 //System.out.println("This is the file that is read:"+Optional);     	
 	
-	       }}
+	       }
+	
+	public static int occurence(String[] str,String chr) {
+		int count=0;
+		  for(int i=0; i<str.length; i++)
+		  {  
+		      if(str[i].contains(chr))
+		      {count++;
+		      }
+		  }
+		 return count; 
+	}
+	
+}
 
 class ParaEngineFactory implements QueryEngineFactory {
 
@@ -538,6 +538,5 @@ class ParaEngineFactory implements QueryEngineFactory {
 		throw new ARQInternalErrorException("QueryEngine: factory called directly with an algebra expression");
 	}
 	
-
 	
 }
