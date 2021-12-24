@@ -22,6 +22,7 @@ import org.apache.jena.sparql.engine.binding.Binding;
 import org.apache.jena.sparql.engine.binding.BindingFactory;
 import org.apache.jena.sparql.engine.binding.BindingHashMap;
 import org.eclipse.rdf4j.query.BindingSet;
+import org.joda.time.LocalTime;
 
 import com.fluidops.fedx.trunk.config.Config;
 import com.fluidops.fedx.trunk.graph.Edge;
@@ -786,7 +787,7 @@ public static LinkedHashMap<List<EdgeOperator>,List<Binding>> JoinedTriplesMinus
 			
 		
 			
-			if ( ParaEng.InnerFilter!=null && (!BGPEval.StartBinding123.containsKey(edge.getV1())) && !BGPEval.StartBinding123.containsKey(edge.getV1())) {
+/*			if ( ParaEng.InnerFilter!=null && (!BGPEval.StartBinding123.containsKey(edge.getV1())) && !BGPEval.StartBinding123.containsKey(edge.getV1())) {
 				Iterator<Binding> rIterator;
 				List<Binding> temp1 = new ArrayList<>();
 				int br = 0;
@@ -879,7 +880,7 @@ public static LinkedHashMap<List<EdgeOperator>,List<Binding>> JoinedTriplesMinus
 				}
 					
 			}
-		
+		*/
 		
 			
 			
@@ -1406,7 +1407,10 @@ for(List<EdgeOperator>  e2:JoinGroupsListLeftTemp) {
 			}
 		}
 			else	
-		
+			{	
+
+				System.out.println("THis is NotJoinedTriples2323232323232:"+LocalTime.now());
+	/*			
 for(int i=0;i<5;i++){	
 	
 
@@ -1426,10 +1430,12 @@ for(int i=0;i<5;i++){
 	
 	BGPEval.finalResultCalculation(NotJoinedTriples,EvaluatedTriples,NotJoinedTriples,0);//}).join();
 //	fjp21.shutdown();
-}
+}*/
+		}
+		System.out.println("123123THis is NotJoinedTriples2323232323232:"+LocalTime.now());
 
-if(!ParaEng.Union.isEmpty())		 
-ProcessUnion();
+		//if(!ParaEng.Union.isEmpty())		 
+//ProcessUnion();
 //	}
 	//	for(Entry<EdgeOperator, ArrayList<Binding>> fr: BGPEval.finalResult.entrySet())
 	//		if(fr.getValue().size()>0)
@@ -1694,7 +1700,7 @@ skp=1;
 					System.out.println("This is weired now:"+eq1.getKey());
 					System.out.println("This is weired now1:"+te.getTriple()+"--"+eq.getValue());
 					int k=0;
-					if(ParaEng.InnerFilter!=null) {
+				/*	if(ParaEng.InnerFilter!=null) {
 					List<Binding> a=new ArrayList<>();
 					   String b=null;
 					 String c=null;
@@ -1755,7 +1761,7 @@ skp=1;
 						continue;
 					}
 			else
-				results =te.exec(null,eq1.getKey());
+			*/	results =te.exec(null,eq1.getKey());
 					
 					System.out.println("This is now exercising here");
 					
@@ -2760,7 +2766,8 @@ skp=1;
 	}
 
 public static void ProcessingTask(LinkedHashMap<List<EdgeOperator>, List<Binding>>  joinedTriples2,LinkedHashMap<List<EdgeOperator>, List<Binding>> processedTriplesUnion2,int IsUnionClause,int bothJoined) {
-	
+	System.out.println("This is time at beginning of processingtask:"+LocalTime.now());
+
 	for(Entry<List<EdgeOperator>, List<Binding>> jt:joinedTriples2.entrySet())
 		System.out.println("This is joinedTriple at beginning:"+jt.getKey()+"--"+jt.getValue().size());
 	for(Entry<List<EdgeOperator>, List<Binding>> jt:processedTriplesUnion2.entrySet())
@@ -3010,8 +3017,14 @@ isExecuted=1;
 		
 }
 else if(!joinedTriples2.isEmpty()||joinedTriples2.size()>0) {
+	System.out.println("THis is the problem in 0 jt"+First.size()+"--"+Second.size());
+	
+	for(Entry<List<EdgeOperator>, List<Binding>>  jt:joinedTriples2.entrySet())
+	{
+		System.out.println("THis is the problem in 2 jt:"+LocalTime.now()+"--"+jt.getValue().size());
+			
+	}
 //	System.out.println("This is here in part 2:"+bothJoined);
-	System.out.println("THis is the problem in 2 jt");
 	int out=0;
 	int isProcessed=0;
 	int e=0;
@@ -3033,7 +3046,10 @@ else if(!joinedTriples2.isEmpty()||joinedTriples2.size()>0) {
 			if(e==1)
 				break;
 		//}
+			System.out.println("THis is the problem in 2 jt 1.1:"+LocalTime.now()+"--"+jt.getValue().size()+"--"+ew1.getValue().size());
 			for(EdgeOperator ew1K:ew1.getKey()) {
+				System.out.println("THis is the problem in 2 jt 1.2:"+LocalTime.now()+"--"+jt.getValue().size()+"--"+ew1.getValue().size());
+				
   			//	for(List<EdgeOperator> et:EvaluatedTriples)
   		//		if(et.equals(ew1))
 	
@@ -3073,11 +3089,10 @@ else if(!joinedTriples2.isEmpty()||joinedTriples2.size()>0) {
 */
 			//if(bothJoined==0)
 
-			System.out.println("THis is the problem in 3 jt");
-			
+			System.out.println("THis is the problem in 3 jt"+First.size()+"--"+Second.size());
 			if(ew1.getKey().toString().equals(jt.getKey().toString())) 
 				break;
-			System.out.println("THis is the problem in 4 jt");
+			System.out.println("THis is the problem in 4 jt:"+First.size()+"--"+Second.size());
 
 			////System.out.printlnln("This is 1 pseudo-iteration:"+ew1.getKey()+"--"+ew1.getValue().parallelStream().limit(3).collect(Collectors.toSet()));
 			First.addAll(ew1.getValue());
@@ -3152,6 +3167,7 @@ else if(!joinedTriples2.isEmpty()||joinedTriples2.size()>0) {
 			Union=	BGPEval.GPUJoin(First,Second,First,Second,0,null);
 			isProcessed=1;
 			}
+		    
 		     	}
 		     	else {
 		     		int c=0;
@@ -3179,6 +3195,8 @@ else if(!joinedTriples2.isEmpty()||joinedTriples2.size()>0) {
 		     	
 		     	joinedTriples2.remove( ew1.getKey());
 		 	joinedTriples2.remove( jt.getKey());
+	     	First=new ArrayList<>();Second=new ArrayList<>();
+
 /*
 			if(BindJoin.inner==1)
 			{
@@ -3203,12 +3221,14 @@ le.getEdge().getV2().setNode(StageGen.StringConversion(BindJoin.biff.substring(1
 */
 		 	joinedTriples2.put(ListEdges,Union);
 		for(Entry<List<EdgeOperator>,List<Binding>> jt21:joinedTriples2.entrySet())
-		    	 System.out.println("This is the final set of problem here1111:"+jt21.getKey()+"--"+jt21.getValue().parallelStream().limit(2).collect(Collectors.toList()));
+		    	 System.out.println("This is the final set of problem here1111222:"+LocalTime.now()+"--"+jt21.getValue().size()+"--"+jt21.getKey()+"--"+jt21.getValue().parallelStream().limit(2).collect(Collectors.toList()));
 			
 		   isProcessed=1;
 		   if(bothJoined==1) {
 				JoinedTriples.remove( ew1.getKey());
 				JoinedTriples.remove( jt.getKey());
+		     	First=new ArrayList<>();Second=new ArrayList<>();
+
 /*
 				if(BindJoin.inner==1)
 				{
@@ -3255,6 +3275,7 @@ if(out==1)
 			NotJoinedTriplesUnion.putAll(processedTriplesUnion2);
 		else
 		NotJoinedTriples.putAll(processedTriplesUnion2);
+	 System.out.println("This is the final set of problem here33334444:"+LocalTime.now());
 }
 else {
 	if(IsUnionClause==1)
@@ -3442,7 +3463,8 @@ System.out.println("This is here in part 1");
 	  			 JoinedTriplesLarge.put(ListEdges,Union);
 			EvaluatedTriplesLarge.add(ListEdges2);
 			   EvaluatedTriplesLarge.add(ew1.getKey());
-		
+		     	First=new ArrayList<>();Second=new ArrayList<>();
+
 		   isExecuted=1;
 		   for(Entry<List<EdgeOperator>, List<Binding>> jt:JoinedTriples.entrySet())
 		  System.out.println("This is joinedTriples:"+jt.getKey()+"--"+jt.getValue().size());
@@ -3577,6 +3599,8 @@ else if(!joinedTriplesLarge2.isEmpty()||joinedTriplesLarge2.size()>0) {
 		     	joinedTriplesLarge2.remove( ew1.getKey());
 			     	joinedTriplesLarge2.remove( jt.getKey());
 		 	joinedTriplesLarge2.put(ListEdges,Union);
+	     	First=new ArrayList<>();Second=new ArrayList<>();
+
 	//	for(Entry<HashMap<List<EdgeOperator>, String>, List<Binding>> jt21:joinedTriplesLarge2.entrySet())
 	//	    	 System.out.println("This is the final set of problem here1111 Large:"+jt21.getKey()+"--"+jt21.getValue().parallelStream().limit(2).collect(Collectors.toList()));
 			   for(Entry<List<EdgeOperator>, List<Binding>> jt11:JoinedTriples.entrySet())
@@ -3587,6 +3611,8 @@ else if(!joinedTriplesLarge2.isEmpty()||joinedTriplesLarge2.size()>0) {
 			   JoinedTriplesLarge.remove( ew1.getKey());
 			   JoinedTriplesLarge.remove( jt.getKey());
 			   JoinedTriplesLarge.put(ListEdges,Union);
+		     	First=new ArrayList<>();Second=new ArrayList<>();
+
 		   }
 		   EvaluatedTriplesLarge.add(ew1.getKey());
 			EvaluatedTriplesLarge.add(jt.getKey());
@@ -3768,7 +3794,7 @@ static void IntermediateProcedureLarge(List<Binding> results,List<EdgeOperator> 
 	//						if(e1.equals(ev.getKey()))
 	//							continue;
 					
-						System.out.println("This is euqality of AllEdges Vertex:"+ae.getEdge()+"--"+ev.getKey()+"--"+edge);
+					//	System.out.println("This is euqality of AllEdges Vertex:"+ae.getEdge()+"--"+ev.getKey()+"--"+edge);
 						
 						//	for(Node sbk:StartBinding)
 					//	System.out.println("This is StartBinding:"+sbk+"--"+ev.getValue().getNode());
@@ -3962,7 +3988,7 @@ static void IntermediateProcedureLarge(List<Binding> results,List<EdgeOperator> 
 //		{	
 	//			System.out.println("This is end 23 set Binding in HashJoin:"+e.getKey());
 	//	}	
-	for(Entry<Multimap<Edge, Vertex>, ArrayList<Binding>> e:BGPEval.StartBindingFinal.entrySet())
+	for(Entry<Multimap<Edge, Vertex>, Integer> e:BGPEval.StartBindingFinal.entrySet())
 	{	
 	//System.out.println("This is end 23 set Binding in HashJoin0101:"+e.getKey());
 	temp1=new LinkedHashSet<>();
@@ -4017,7 +4043,7 @@ static void IntermediateProcedureLarge(List<Binding> results,List<EdgeOperator> 
 					}
 						Vertex ver=null;
 		for(Edge ee:edgee) {
-			System.out.println("This is euqality of AllEdges Vertex:"+edgee+"--"+ev.getKey()+"--"+ee);
+		//	System.out.println("This is euqality of AllEdges Vertex:"+edgee+"--"+ev.getKey()+"--"+ee);
 			
 					if(ev.getKey().equals(ee)) {
 						
