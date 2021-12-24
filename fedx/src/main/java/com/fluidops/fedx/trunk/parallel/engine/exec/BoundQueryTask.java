@@ -101,7 +101,7 @@ public  synchronized  Query buildQuery() {
 
 		for (EdgeOperator btt : getBusyTreeTriple()) {
 //if(ced<ghi) {
-	 System.out.println("This is the BushyTreeTrple in QueryTask:"+binding);
+	// System.out.println("This is the BushyTreeTrple in QueryTask:"+binding);
 	
 			subject= QueryUtil.replacewithBinding(btt.getEdge().getTriple().getSubject(), binding);
 			predicate = QueryUtil.replacewithBinding(btt.getEdge().getTriple().getPredicate(), binding);
@@ -285,7 +285,7 @@ QueryTask.isBound=1;
 		else
 			{
 			String qString=null;
-			 if(!ParaEng.InnerFilterSimple.isEmpty() ||  ParaEng.InnerFilterSimple.size()>0)
+			 /*if(!ParaEng.InnerFilterSimple.isEmpty() ||  ParaEng.InnerFilterSimple.size()>0)
 			 {
 			for(Entry<String, String> ifs:ParaEng.InnerFilterSimple.entrySet()) 
 				if(triple.getSubject().getName().toString().contains(ifs.getKey().substring(1))
@@ -302,7 +302,7 @@ QueryTask.isBound=1;
 		 qString = QueryExtension(query);
 			}
 			else  
-		    qString =query.toString();// QueryExtension(query);
+		 */   qString =query.toString();// QueryExtension(query);
 			// qString=TripleExecution.ab+" "+ qString.substring(qString.indexOf("*")+1);
 			qexec = new QueryEngineHTTP(url, qString);
 			
